@@ -20,8 +20,13 @@ Bản demo (`index.html`) mô phỏng trang bài viết với giao diện đề 
 
 ## 3. Mobile: banner, form, hỏi đáp và thanh đáy
 
-- **Banner in-content giữ trên mobile**, vì mobile không có sidebar nên đây là vị trí banner duy nhất. Gom tất cả banner vào **1 khung slide** có mũi tên và hé lộ banner kế tiếp, thay vì nhiều banner rời.
-- **Vị trí banner:** nếu biên tập chèn shortcode `[ta_banner]` thì hiện đúng chỗ đó. Nếu không, hệ thống tự đặt trước H2 sau mốc 30% bài (bài không có H2 thì đặt giữa 2 đoạn văn). Banner **không bao giờ chen vào giữa danh sách/bảng** như lỗi hiện tại: CMS đang đếm cả thẻ `<p>` nằm trong `<li>`.
+- **Banner in-content giữ trên mobile**, vì mobile không có sidebar nên đây là vị trí banner duy nhất. Mỗi bài chỉ có **1 vị trí banner**, mọi banner của bài gom vào **1 khung slide** có mũi tên và hé lộ banner kế tiếp, thay vì nhiều banner rời.
+- **Quy tắc gom vào 1 vị trí.** Hệ thống xét lần lượt, gặp bước nào khớp thì dừng ở bước đó:
+  1. **Có shortcode `[ta_banner]`:** slide đặt đúng chỗ biên tập chèn. Bài chèn nhiều shortcode thì chỉ lấy cái đầu tiên.
+  2. **Không có shortcode nhưng CMS đặt vị trí riêng cho từng banner** (ví dụ banner A trên H2 thứ 4, banner B trên H2 thứ 5): gom tất cả về **vị trí sớm nhất có thật trong bài** (ở ví dụ này là H2 thứ 4), các vị trí còn lại bỏ trống. Banner đặt ở vị trí không tồn tại (đặt H2 thứ 5 nhưng bài chỉ có 4 H2) vẫn được đưa vào slide, không bị mất như hiện tại.
+  3. **Không có cấu hình nào:** tự đặt trước H2 đầu tiên sau mốc 30% độ dài bài. Bài dưới 3 H2 (tin tức) thì đặt giữa 2 đoạn văn gần mốc 30%. Bài ngắn (dưới 350 từ hoặc dưới 4 đoạn) thì đặt cuối bài.
+- **Nội dung slide:** tất cả banner hợp lệ của bài, đã loại banner lệch chuyên khoa, xếp theo mức liên quan × mức ưu tiên, tối đa 3 banner, banner hạng 1 hiện trước.
+- **Banner không bao giờ chen vào giữa danh sách hoặc bảng** như lỗi hiện tại (CMS đang đếm cả thẻ `<p>` nằm trong `<li>`). Quy tắc mới chỉ chèn ở ranh giới giữa các khối nội dung.
 - **Form đặt lịch** (`[ta_booking]`) và **"Bác sĩ đã trả lời"** (`[ta_qa]`) chỉ hiện trong bài khi biên tập chèn shortcode ở vị trí phù hợp với nội dung. Không chèn thì tự ẩn, vì thanh đáy đã có nút đặt lịch và tư vấn.
 - **Thanh đáy** cao 56px (hiện tại 32px, nhỏ hơn chuẩn bấm 44–48px), gồm 3 nút:
   - **Gọi**: chọn tổng đài Hà Nội hoặc TP.HCM.
