@@ -27,10 +27,11 @@ Bản demo (`index.html`) mô phỏng trang bài viết với giao diện đề 
   3. **Không có cấu hình nào:** tự đặt trước H2 đầu tiên sau mốc 30% độ dài bài. Bài dưới 3 H2 (tin tức) thì đặt giữa 2 đoạn văn gần mốc 30%. Bài ngắn (dưới 350 từ hoặc dưới 4 đoạn) thì đặt cuối bài.
 - **Nội dung slide:** tất cả banner hợp lệ của bài, đã loại banner lệch chuyên khoa, xếp theo mức liên quan × mức ưu tiên, tối đa 3 banner, banner hạng 1 hiện trước.
 - **Banner không bao giờ chen vào giữa danh sách hoặc bảng** như lỗi hiện tại (CMS đang đếm cả thẻ `<p>` nằm trong `<li>`). Quy tắc mới chỉ chèn ở ranh giới giữa các khối nội dung.
-- **Form đặt lịch** (`[ta_booking]`) và **"Bác sĩ đã trả lời"** (`[ta_qa]`) chỉ hiện trong bài khi biên tập chèn shortcode ở vị trí phù hợp với nội dung. Không chèn thì tự ẩn, vì thanh đáy đã có nút đặt lịch và tư vấn.
+- **Form đặt lịch** (`[ta_booking]`) chỉ hiện trong bài khi biên tập chèn shortcode ở vị trí phù hợp với nội dung. Không chèn thì tự ẩn, vì thanh đáy đã có nút Đặt lịch khám.
+- **"Bác sĩ đã trả lời"** (`[ta_qa]`) chỉ hiện khi biên tập chèn shortcode. Không chèn thì **ẩn hẳn trên mobile, không đưa vào thanh đáy**. Lý do: thanh đáy chỉ giữ các kênh liên hệ ngay; kho hỏi đáp hiện còn nhiều câu cũ, tự hiện ở mọi bài dễ ra câu lệch chủ đề. Biên tập chỉ chèn ở những bài có câu hỏi đáp thật sự liên quan.
 - **Thanh đáy** cao 56px (hiện tại 32px, nhỏ hơn chuẩn bấm 44–48px), gồm 3 nút:
   - **Gọi**: chọn tổng đài Hà Nội hoặc TP.HCM.
-  - **Chat tư vấn**: giữ Messenger như hiện tại, thêm Zalo, kèm lựa chọn gửi câu hỏi cho bác sĩ.
+  - **Chat tư vấn**: giữ Messenger như hiện tại, thêm Zalo.
   - **Đặt lịch khám**: mở form ngay trong bài, không chuyển trang.
 - **Mục lục nổi** (nút tròn có vòng tiến độ đọc) giữ như site hiện tại, bổ sung hiển thị cả H3 và mục đang đọc.
 

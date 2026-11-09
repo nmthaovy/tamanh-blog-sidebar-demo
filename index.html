@@ -580,8 +580,8 @@ function article(mode){
   // Mobile: form đặt lịch + thẻ hỏi đáp chỉ hiện khi biên tập chèn shortcode
   if(scQa>=0)push(insBefore,scQa,`<div class="ctx">${an('Shortcode [ta_qa] do biên tập chèn → thẻ "Bác sĩ đã trả lời" hiện tại đây','ok')}${ask(2)}</div>`);
   if(scBk>=0)push(insBefore,scBk,`<div class="ctx">${an('Shortcode [ta_booking] do biên tập chèn → form đặt lịch hiện tại đây','ok')}${booking()}</div>`);
-  const miss=[scBk<0?'[ta_booking]':'',scQa<0?'[ta_qa]':''].filter(Boolean);
-  if(miss.length)tail+=an(`Bài không có shortcode ${miss.join(' và ')} → không chèn ${scBk<0&&scQa<0?'form đặt lịch và thẻ hỏi đáp':scBk<0?'form đặt lịch':'thẻ hỏi đáp'} vào bài. Thanh đáy đã có nút Đặt lịch khám và Chat tư vấn`,'ok')}
+  if(scBk<0)tail+=an('Bài không có shortcode [ta_booking] → không chèn form vào bài. Thanh đáy đã có nút Đặt lịch khám','ok');
+  if(scQa<0)tail+=an('Bài không có shortcode [ta_qa] → ẩn hẳn thẻ "Bác sĩ đã trả lời" trên mobile, không đưa vào thanh đáy','ok')}
  else if(!mob&&S.qa==='inline'&&S.lay!=='now'){const c=ctxSlots(art,used);const at=scQa>=0?scQa:c.qa;
   const qh=`<div class="ctx">${an('Thẻ hỏi đáp (PC · option chèn trong bài) · '+(scQa>=0?'theo shortcode [ta_qa]':c.qa!=null?'trước H2 gần mốc 50% bài':'bài dưới 3 H2 → cuối bài'),'ok')}${ask(3)}</div>`;
   if(at!=null)push(insBefore,at,qh);else tail+=qh}
@@ -723,9 +723,7 @@ function openSheet(title,inner){ovroot.innerHTML=`<div class="ovl" data-act="clo
 function sheet(k){if(k==='book')openSheet('Đặt lịch khám',booking());
  else if(k==='chat')openSheet('Chat tư vấn',`<div class="chat-list">
   <button class="chat-row" type="button" data-act="toast" data-m="Mở Zalo OA Bệnh viện Tâm Anh (demo)">${ICON.zl}<span><b>Chat qua Zalo</b><small>Nhắn tin với CSKH Tâm Anh</small></span></button>
-  <button class="chat-row" type="button" data-act="toast" data-m="Mở Messenger Bệnh viện Tâm Anh (demo)">${ICON.ms}<span><b>Chat qua Messenger</b><small>Fanpage Bệnh viện Đa khoa Tâm Anh</small></span></button>
-  <button class="chat-row" type="button" data-act="sheet" data-k="ask"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#1c3f94"/><path d="M8 9h8M8 13h5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg><span><b>Gửi câu hỏi cho bác sĩ</b><small>Bác sĩ ${CATE} trả lời</small></span></button>
-  <p class="sos">Cấp cứu: gọi 115 hoặc đến khoa Cấp cứu 24/7</p></div>`);
+  <button class="chat-row" type="button" data-act="toast" data-m="Mở Messenger Bệnh viện Tâm Anh (demo)">${ICON.ms}<span><b>Chat qua Messenger</b><small>Fanpage Bệnh viện Đa khoa Tâm Anh</small></span></button>  <p class="sos">Cấp cứu: gọi 115 hoặc đến khoa Cấp cứu 24/7</p></div>`);
  else if(k==='ask')openSheet('Hỏi bác sĩ',ask(2,true));
  else openSheet('Gọi tổng đài',`<div class="hbox" style="margin:4px 0 0;box-shadow:none">${REGIONS.map(r=>`<div style="padding:12px 14px;border-bottom:1px solid var(--line)"><b style="color:var(--brand);font-size:16px">${r.name}</b><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">${r.hot.map(h=>`<a class="hot-btn" href="tel:${h.replace(/\s/g,'')}" data-act="toast" data-m="Gọi ${h}">${ICON.phone}${h}</a>`).join('')}</div></div>`).join('')}<p class="sos" style="padding:0 14px 12px">Cấp cứu: gọi 115 hoặc đến khoa Cấp cứu 24/7</p></div>`)}
 function tocSheet(){const items=tocItems(A()),act=activeSec(),pct=Math.round(readPct()*100);
