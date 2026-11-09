@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mô phỏng blog Tâm Anh</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: bản sao trang bài viết tamanhhospital.vn (Helvetica thân bài, Barlow cho module như site thật) + thanh điều khiển demo tối màu phía trên */
+:root{
+  --brand:#1c3f94; --brand-d:#122c6b; --brand-50:#eef3fc; --brand-100:#d8e2f6; --gold:#ffc52e;
+  --ink:#172033; --txt:#2e3646; --mut:#647089; --line:#e2e7f0; --paper:#ffffff; --tint:#f5f8fd;
+  --danger:#c8321e; --ok:#0f7a55; --ok-50:#e6f5ee; --warn:#a15c07; --warn-50:#fff6e0;
+  --f-ui:"Barlow",Helvetica,Arial,sans-serif; --f-body:Helvetica,Arial,sans-serif;
+  --r-s:6px; --r-m:10px; --r-l:14px; --shadow:0 1px 2px rgba(18,44,107,.06),0 6px 18px rgba(18,44,107,.07);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%}
+body{display:flex;flex-direction:column;background:#1d2230;font-family:var(--f-body)}
+button,input,select,textarea{font-family:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+/* ===== Thanh điều khiển demo (không thuộc website) ===== */
+.tb{flex:none;background:#0e121b;color:#cfd6e4;font:500 12.5px/1.3 var(--f-ui);display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;padding:8px 14px;border-bottom:1px solid #000}
+.tb .t{color:#fff;font-weight:700;font-size:14px;letter-spacing:.01em}
+.tb .g{display:flex;align-items:center;gap:7px}
+.tb .g>span{color:#8590a6;text-transform:uppercase;font-size:11px;letter-spacing:.06em}
+.sg{display:inline-flex;border:1px solid #2c3446;border-radius:7px;overflow:hidden}
+.sg button{border:0;background:#161c29;color:#cfd6e4;padding:5px 10px;font:500 12.5px var(--f-ui);cursor:pointer;border-right:1px solid #2c3446}
+.sg button:last-child{border-right:0}
+.sg button[aria-pressed="true"]{background:#3a62d4;color:#fff;font-weight:600}
+.tb label.ck{display:flex;gap:6px;align-items:center;cursor:pointer}
+.tb .note{color:var(--gold)}
+.stage{flex:1;min-height:0;display:flex;justify-content:center;align-items:center}
+.frame{position:relative;background:var(--paper);width:100%;height:100%;overflow:hidden}
+.frame.phone{width:390px;height:min(844px,calc(100% - 28px));border:11px solid #05070b;border-radius:42px;box-shadow:0 24px 70px rgba(0,0,0,.55)}
+.frame.tablet{width:820px;height:calc(100% - 28px);border:11px solid #05070b;border-radius:24px}
+.vp{height:100%;overflow-y:auto;background:var(--paper);color:var(--txt);font-size:16px;line-height:1.65}
+.phone .vp{scrollbar-width:none}.phone .vp::-webkit-scrollbar{display:none}
+
+/* ===== Header ===== */
+.hd{background:var(--brand);color:#fff}
+.hd-in{max-width:1170px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding:14px 16px}
+.logo{display:flex;align-items:center;gap:6px;color:#fff}
+.logo .ta{font:800 44px/1 Arial,sans-serif;letter-spacing:-3px}
+.logo .lt{font:700 15px/1.05 Arial,sans-serif}
+.hot{display:flex;gap:20px;color:var(--gold);font:700 15.5px var(--f-ui);text-align:center}
+.hot small{display:block;color:#d6e0ff;font-weight:500;font-size:11px}
+.hd-links{display:flex;gap:18px;justify-content:flex-end;font:500 14.5px var(--f-ui);margin-top:6px}
+.mn{border-bottom:1px solid var(--line);background:#fff}
+.mn-in{max-width:1170px;margin:0 auto;display:flex;justify-content:space-between;padding:10px 16px;color:var(--brand);font:500 15px var(--f-ui)}
+.hd-m{background:#fff;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+.hd-m .brandtxt{font:700 21px var(--f-ui);color:var(--brand)}.hd-m .brandtxt span{font-weight:400;color:#2f6ee0}
+.burger{width:22px;height:16px;border-top:2.5px solid var(--brand);border-bottom:2.5px solid var(--brand);position:relative}
+.burger::after{content:"";position:absolute;left:0;right:0;top:4.5px;border-top:2.5px solid var(--brand)}
+.srch{width:18px;height:18px;border:2.5px solid var(--brand);border-radius:50%;position:relative}
+.srch::after{content:"";position:absolute;width:7px;border-top:2.5px solid var(--brand);right:-6px;bottom:-3px;transform:rotate(45deg)}
+
+/* ===== Lưới trang ===== */
+.pg{margin:0 auto;padding:20px 16px 40px;display:grid;align-items:start}
+.pg.now{grid-template-columns:148px minmax(0,874px) 262px;column-gap:12px;justify-content:center}
+.pg.A{grid-template-columns:44px minmax(0,865px) 300px;column-gap:28px;justify-content:center}
+.pg.B3{grid-template-columns:190px minmax(0,865px) 300px;column-gap:24px;justify-content:center}
+.share-card{padding:12px}
+.share-card .ct{margin-bottom:8px}
+.share-row{display:flex;gap:7px;flex-wrap:wrap}
+.share-row .sh{width:34px;height:34px}
+.pg.m{display:block;padding:12px 14px 24px}
+.pg.t{display:block;max-width:760px;padding:20px 22px 30px}
+
+/* ===== Bài viết ===== */
+.crumb{font:500 12.5px var(--f-ui);color:var(--mut);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px}
+.crumb b{color:var(--brand);font-weight:600}
+h1.ttl{font:700 21px/1.35 var(--f-body);color:var(--brand);text-transform:uppercase;margin:0 0 10px;text-wrap:balance}
+.m h1.ttl{font-size:19px}
+.meta{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font:500 13px var(--f-ui);color:var(--mut);margin-bottom:12px}
+.ggpill{border:1px solid var(--line);border-radius:20px;padding:4px 11px;color:var(--ink)}
+.ggpill b{color:#4285f4}
+.top2{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:18px;align-items:start}
+.top2.nodoc,.m .top2,.t .top2{display:block}
+.doc{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:var(--r-l);padding:12px 14px;box-shadow:var(--shadow);font:500 13.5px/1.4 var(--f-ui);color:var(--ink);background:#fff}
+.m .doc,.t .doc{margin:12px 0}
+.av{width:62px;height:62px;border-radius:50%;background:linear-gradient(145deg,var(--brand-100),#9fb5ea);flex:none;display:flex;align-items:center;justify-content:center;color:var(--brand);font:700 17px var(--f-ui)}
+.doc .lb{color:var(--mut);font-size:12.5px}
+.doc .nm{font-weight:700;text-transform:uppercase;font-size:13.5px;margin:2px 0}
+.doc .bt{display:flex;gap:6px;margin-top:8px}
+.doc .bt span{font-size:11.5px;font-weight:700;padding:6px 11px;border-radius:5px;color:#fff;background:var(--brand);letter-spacing:.02em}
+.doc .bt span+span{background:#5d6678}
+.sapo{margin:0;color:var(--txt)}
+.feat{width:100%;height:auto;display:block;margin:16px 0;border-radius:2px;background:var(--tint)}
+.feat-ph{aspect-ratio:1200/628;background:linear-gradient(135deg,var(--brand-50),var(--brand-100));display:flex;align-items:center;justify-content:center;color:var(--mut);font:500 14px var(--f-ui);margin:16px 0}
+.art p{margin:0 0 15px}
+.art h2{font:700 21px/1.35 var(--f-body);color:var(--ink);margin:30px 0 12px;text-wrap:balance;scroll-margin-top:16px}
+.art h3{font:700 18px/1.4 var(--f-body);color:var(--ink);margin:20px 0 10px;scroll-margin-top:16px}
+.m .art h2{font-size:19.5px}.m .art h3{font-size:17px}
+.art ul{margin:0 0 15px;padding-left:22px}
+.art li{margin-bottom:6px}
+.fig{margin:18px 0}
+.fig .ph{aspect-ratio:16/9;background:linear-gradient(135deg,#eaf0fa,#cfdbf2);display:flex;align-items:center;justify-content:center;color:#5d6d92;font:500 13px var(--f-ui)}
+.fig figcaption{font-size:14px;color:var(--mut);text-align:center;font-style:italic;margin-top:6px}
+.alert{border-left:4px solid #f0a020;background:#fff8e8;padding:11px 15px;margin:0 0 15px;font-size:15.5px;border-radius:0 6px 6px 0}
+.toc{border:1px solid var(--line);border-radius:var(--r-m);margin:16px 0 20px;font:500 15px/1.45 var(--f-ui);overflow:hidden}
+.toc .th{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--tint);border-bottom:1px solid var(--line);font-weight:700;color:var(--ink)}
+.toc ol{margin:0;padding:10px 16px 12px 34px;color:var(--brand)}
+.toc li{margin:4px 0}
+.toc ol ol{padding:2px 0 2px 18px;list-style:lower-alpha;color:#3f5aa5;font-size:14px}
+.toc a{color:inherit;text-decoration:none}
+.mockflag{font:600 12px var(--f-ui);color:var(--warn);background:var(--warn-50);border:1px dashed #e5b04b;padding:3px 9px;border-radius:5px;display:inline-block;margin-bottom:10px}
+.endshare{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:20px 0 4px;font:500 14px var(--f-ui);color:var(--mut)}
+.related h4{font:700 19px var(--f-ui);color:var(--brand);margin:30px 0 12px;text-transform:uppercase;letter-spacing:.02em}
+.rgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.m .rgrid{grid-template-columns:1fr}
+.rc .im{aspect-ratio:16/9;background:linear-gradient(135deg,#eaf0fa,#cfdbf2);border-radius:6px}
+.rc p{font:600 15px/1.35 var(--f-ui);color:var(--ink);margin:8px 0 0}
+.foot{background:var(--brand-d);color:#c9d4f2;font:500 13px var(--f-ui);padding:24px 16px;text-align:center}
+
+/* ===== Hộp hệ thống bệnh viện ===== */
+.hbox{margin:26px 0 8px;border:1px solid var(--line);border-radius:var(--r-l);overflow:hidden;font-family:var(--f-ui);box-shadow:var(--shadow)}
+.hbox-t{background:var(--brand);color:#fff;font-weight:700;font-size:15.5px;letter-spacing:.04em;text-transform:uppercase;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hbox-t span{font-weight:600;font-size:12px;letter-spacing:.02em;background:var(--gold);color:var(--ink);padding:3px 9px;border-radius:20px;text-transform:none}
+.hcols{display:grid;grid-template-columns:1fr 1fr}
+.hcols .hreg+.hreg{border-left:1px solid var(--line)}
+.hreg{display:flex;flex-direction:column}
+.hreg-h{display:flex;justify-content:space-between;align-items:baseline;padding:12px 16px 4px}
+.hreg-h b{font-size:17px;color:var(--brand)}
+.hreg-h span{font-size:12.5px;color:var(--mut)}
+.hsites{list-style:none;margin:0;padding:4px 16px 8px;display:grid;gap:0;flex:1}
+.hsites li{padding:11px 0;border-bottom:1px dashed var(--line);display:grid;gap:3px}
+.hsites li:last-child{border-bottom:0}
+.hs-n{font-weight:700;font-size:15px;color:var(--ink);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.er{font-size:11px;font-weight:700;color:var(--danger);background:#fdecea;border-radius:4px;padding:1px 6px}
+.hs-a{font-size:14px;color:var(--txt);line-height:1.4}
+.hs-t{font-size:13px;color:var(--mut);font-variant-numeric:tabular-nums}
+.hs-map{font-size:13px;font-weight:600;color:var(--brand);text-decoration:none;justify-self:start}
+.hs-map:hover{text-decoration:underline}
+.hreg-f{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px 14px;background:var(--tint);border-top:1px solid var(--line);align-items:center}
+.hot-btn{display:inline-flex;gap:6px;align-items:center;font-weight:700;font-size:15px;color:var(--brand);background:#fff;border:1px solid var(--brand-100);border-radius:8px;padding:7px 11px;text-decoration:none;font-variant-numeric:tabular-nums}
+.hot-btn svg{width:15px;height:15px}
+.hmail{font-size:13px;color:var(--mut);width:100%}
+.htabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line);background:var(--tint)}
+.htabs button{border:0;background:none;padding:11px 8px;font:700 15px var(--f-ui);color:var(--mut);border-bottom:3px solid transparent;cursor:pointer}
+.htabs button[aria-selected="true"]{color:var(--brand);border-bottom-color:var(--brand);background:#fff}
+.htabs~.hreg .hreg-h{display:none}
+
+/* ===== Banner ===== */
+.bnr{position:relative;display:block;border-radius:8px;overflow:hidden;background:var(--brand-50)}
+.bnr.side{aspect-ratio:262/343}
+.bnr.inl{aspect-ratio:1712/696}
+.bimg{display:block;width:100%;height:100%;object-fit:cover}
+.bfb{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;color:#fff;gap:4px;font-family:var(--f-ui)}
+.bfb b{font-size:18px;line-height:1.2}.bfb span{font-size:12.5px;opacity:.9}
+.adlbl{font:500 11px var(--f-ui);color:#9aa4b8;letter-spacing:.04em;text-transform:uppercase}
+.svc-lbl{font:600 13px var(--f-ui);color:var(--brand);display:flex;align-items:center;gap:6px}
+.svc-lbl::before{content:"";width:3px;height:13px;border-radius:2px;background:var(--gold)}
+.inl-ad{margin:8px 0 22px}
+.inl-ad .adlbl{display:block;text-align:right;margin-bottom:4px}
+/* carousel */
+.car{font-family:var(--f-ui)}
+.car-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.car-stage{position:relative}
+.car-view{overflow:hidden;border-radius:8px;touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none}
+.car-view:active{cursor:grabbing}
+.car-strip{display:flex;gap:10px;transition:transform .45s cubic-bezier(.2,.7,.2,1);will-change:transform}
+.car-sl{flex:0 0 100%}
+.car-inl .car-sl{flex-basis:87%}
+.car-sl img{pointer-events:none;-webkit-user-drag:none}
+.car-dots{display:flex;gap:5px;margin-top:9px}
+.car-dots button{flex:1;height:4px;border:0;border-radius:3px;background:#dbe1ec;padding:0;cursor:pointer;position:relative;overflow:hidden}
+.car-dots button i{position:absolute;inset:0 auto 0 0;width:0;background:var(--brand)}
+.car-dots button.past i{width:100%}
+.car-ar{position:absolute;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,.95);box-shadow:0 2px 10px rgba(0,0,0,.22);color:var(--ink);font:700 20px/1 var(--f-ui);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2}
+.car-ar.prev{left:6px}.car-ar.next{right:6px}
+.car-n{font-size:12px;font-weight:600;color:var(--mut);font-variant-numeric:tabular-nums}
+
+/* ===== Cột bên ===== */
+.rail{position:sticky;top:16px;display:grid;gap:14px}
+.rail-now{display:grid;gap:10px}
+.share-v{position:sticky;top:16px;display:flex;flex-direction:column;align-items:center;gap:12px;padding-top:6px;font-family:var(--f-ui)}
+.share-v .lb{font-size:12px;color:var(--mut);font-weight:500}
+.share-v hr{width:26px;border:0;border-top:1px solid var(--line);margin:2px 0}
+.sh{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:transform .15s,box-shadow .15s}
+.sh:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(18,44,107,.15)}
+.sh svg{width:22px;height:22px}
+.share-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 12px;font:500 13.5px var(--f-ui);color:var(--mut)}
+.share-h .sh{width:34px;height:34px}
+.ltoc{position:sticky;top:16px;display:grid;gap:12px;font-family:var(--f-ui)}
+.ltoc .card{padding:14px 12px}
+.ltoc .ct{font-weight:700;font-size:15px;color:var(--ink);margin-bottom:8px;display:flex;justify-content:space-between;align-items:baseline}
+.ltoc .ct span{font-size:12px;color:var(--mut);font-weight:500;font-variant-numeric:tabular-nums}
+.ltoc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;counter-reset:t}
+.ltoc li{counter-increment:t}
+.ltoc ol button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:20px 1fr;gap:2px;width:100%;cursor:pointer;font-size:13.5px;line-height:1.35;padding:6px 8px 6px 6px;border-radius:6px;color:var(--mut)}
+.ltoc ol button::before{content:counter(t);font-weight:700;color:#a3adc2}
+.ltoc ol button:hover{background:var(--tint);color:var(--ink)}
+.ltoc ol button.on{color:var(--brand);font-weight:700;background:var(--brand-50)}
+.ltoc ol button.on::before{color:var(--brand)}
+.prog{height:4px;background:#e6eaf2;border-radius:3px;overflow:hidden;margin-bottom:12px}
+.prog i{display:block;height:100%;width:0;background:var(--brand);transition:width .15s}
+
+/* ===== Module ===== */
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r-l);padding:16px;box-shadow:var(--shadow);font-family:var(--f-ui)}
+.bk-h{margin-bottom:12px}
+.bk-h b{display:block;font-size:19px;color:var(--brand);letter-spacing:.01em}
+.bk-h span{font-size:13px;color:var(--mut)}
+.kt{margin-bottom:6px}
+.kt-lbl{display:block;font-size:12.5px;font-weight:600;color:#4a5468;margin-bottom:5px}
+.kt-tab{width:100%;min-height:44px;text-align:left;border:1.5px solid var(--brand);background:var(--brand-50);color:var(--brand);border-radius:9px;padding:8px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--f-ui)}
+.kt-tab b{font-size:15.5px}
+.kt-tab i{font-style:normal;font-size:13px;transition:transform .2s;display:inline-block}
+.kt-tab[aria-expanded="true"]{background:var(--brand);color:#fff}
+.kt-tab[aria-expanded="true"] i{transform:rotate(180deg)}
+.kt-opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;padding:10px;background:var(--tint);border-radius:9px}
+.kt-opts button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:20px;padding:5px 11px;font:500 13.5px var(--f-ui);cursor:pointer}
+.kt-opts button[aria-pressed="true"]{border-color:var(--brand);background:var(--brand);color:#fff}
+.fl{display:block;font-size:12.5px;font-weight:600;color:#4a5468;margin:10px 0 4px}
+.inp{width:100%;font:500 15px var(--f-ui);padding:10px 12px;border:1px solid #cdd5e3;border-radius:8px;background:#fff;color:var(--ink);min-height:44px}
+.inp::placeholder{color:#a0a9bb;font-weight:400}
+.inp:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-100)}
+.inp[aria-invalid="true"]{border-color:var(--danger);box-shadow:0 0 0 3px #fbdcd6}
+textarea.inp{min-height:84px;resize:vertical}
+.err{display:block;color:var(--danger);font-size:12.5px;margin-top:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font:500 13.5px var(--f-ui);border:1px solid #cdd5e3;background:#fff;color:var(--ink);border-radius:20px;padding:6px 12px;cursor:pointer}
+.chips button[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-50);color:var(--brand);font-weight:700}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#4a5468;margin-top:10px;line-height:1.35;cursor:pointer}
+.chk input{margin:2px 0 0;width:16px;height:16px;accent-color:var(--brand)}
+.btn{width:100%;margin-top:12px;font:700 16px var(--f-ui);letter-spacing:.02em;border:0;border-radius:9px;padding:12px;background:var(--brand);color:#fff;cursor:pointer;min-height:48px;transition:background .15s}
+.btn:hover{background:var(--brand-d)}
+.btn.gh{background:#fff;color:var(--brand);border:1.5px solid var(--brand)}
+.btn.gh:hover{background:var(--brand-50)}
+.sos{font-size:12.5px;color:var(--danger);margin:10px 0 0;line-height:1.35;display:flex;gap:6px;align-items:flex-start}
+.sos::before{content:"!";flex:none;width:16px;height:16px;border-radius:50%;background:var(--danger);color:#fff;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.done{background:var(--ok-50);color:var(--ok);border-radius:10px;padding:14px;font-size:14.5px;line-height:1.45}
+.done b{display:block;margin-bottom:4px;font-size:16px}
+.qa{list-style:none;margin:0 0 6px;padding:0;display:grid}
+.qa li{font-size:15px;line-height:1.38;padding:10px 0;border-bottom:1px dashed var(--line)}
+.qa li:first-child{padding-top:2px}
+.qa a{color:var(--ink);text-decoration:none;font-weight:600}
+.qa a:hover{color:var(--brand)}
+.qa span{display:block;font-size:12.5px;color:var(--mut);margin-top:3px}
+.ctx{margin:24px 0}
+.qa-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.qa-h b{font-size:17px;color:var(--brand)}.qa-h span{font-size:12.5px;color:var(--mut)}
+
+/* ===== Mobile: thanh đáy, sheet, nút mục lục ===== */
+.bar-now{position:sticky;bottom:0;display:grid;grid-template-columns:1fr 1fr 1fr;height:32px;background:#fff;border-top:1px solid var(--line);z-index:5}
+.bar-now button{border:0;border-right:1px solid #fff;background:var(--brand);color:#fff;font:600 13px var(--f-ui);cursor:pointer}
+.bar-new{position:sticky;bottom:0;display:grid;grid-template-columns:.85fr 1fr 1.45fr;gap:7px;padding:8px 10px;background:rgba(255,255,255,.97);border-top:1px solid var(--line);z-index:5;transition:transform .25s;box-shadow:0 -6px 18px rgba(18,44,107,.08);font-family:var(--f-ui)}
+.bar-new.hide{transform:translateY(115%)}
+.bar-new button{font:700 13.5px/1.1 var(--f-ui);min-height:48px;border-radius:11px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 6px}
+.bar-new button svg{width:18px;height:18px;flex:none}
+.bar-new button span{display:grid;text-align:left}
+.bar-new button small{font-weight:500;font-size:11px;color:var(--mut)}
+.bar-new button.pri{background:var(--brand);border-color:var(--brand);color:#fff}
+.bar-new button.pri small{color:#c8d5ff}
+.chat-list{display:grid;gap:9px;margin-top:4px}
+.chat-row{display:flex;gap:12px;align-items:center;width:100%;text-align:left;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff;cursor:pointer;font-family:var(--f-ui);min-height:60px}
+.chat-row:hover{border-color:var(--brand-100);background:var(--tint)}
+.chat-row svg{width:32px;height:32px;flex:none}
+.chat-row span{display:grid}.chat-row b{font-size:15.5px;color:var(--ink)}.chat-row small{font-size:12.5px;color:var(--mut)}
+.ovl{position:absolute;inset:0;background:rgba(8,12,24,.45);display:flex;align-items:flex-end;z-index:20;animation:fade .2s}
+.sheet{background:#fff;width:100%;border-radius:20px 20px 0 0;max-height:90%;overflow-y:auto;padding:8px 16px 22px;animation:up .25s cubic-bezier(.2,.7,.2,1);font-family:var(--f-ui)}
+.sheet .card{box-shadow:none;border:0;padding:4px 0 0}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+@keyframes fade{from{opacity:0}}
+.grab{width:44px;height:5px;border-radius:3px;background:#d3d8e2;margin:4px auto 8px}
+.sh-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.sh-head b{font-size:18px;color:var(--ink)}
+.x{border:0;background:var(--tint);color:var(--ink);cursor:pointer;font:600 13px var(--f-ui);border-radius:20px;padding:6px 12px}
+.toast{position:absolute;left:50%;transform:translateX(-50%);bottom:84px;background:#111827;color:#fff;font:500 13.5px var(--f-ui);padding:10px 15px;border-radius:9px;z-index:30;max-width:90%;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.fab{position:absolute;right:10px;top:50%;width:52px;height:52px;border-radius:50%;border:0;background:#fff;box-shadow:0 4px 16px rgba(18,44,107,.28);cursor:pointer;z-index:8;display:flex;align-items:center;justify-content:center;transition:opacity .2s,transform .2s}
+.fab.off{opacity:0;transform:scale(.7);pointer-events:none}
+.fab svg.ring{position:absolute;inset:0;width:52px;height:52px;transform:rotate(-90deg)}
+.fab svg.ic{width:22px;height:22px}
+.fab.now{background:rgba(28,63,148,.18);box-shadow:none;width:50px;height:50px}
+.fab.dfab{right:auto;transform:translateY(-50%)}
+.fab.dfab.off{transform:translateY(-50%) scale(.7)}
+.btt{position:absolute;right:16px;bottom:16px;width:48px;height:48px;border-radius:50%;border:0;background:rgba(28,63,148,.88);color:#fff;cursor:pointer;z-index:8;transition:opacity .2s,background .15s;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(18,44,107,.25)}
+.btt:hover{background:var(--brand)}
+.btt svg{width:22px;height:22px}
+.btt.off{opacity:0;pointer-events:none}
+.ovl-t{position:absolute;inset:0;z-index:20}
+.tocpop{position:absolute;width:360px;max-height:75%;overflow-y:auto;background:#fff;border:1px solid var(--line);border-radius:var(--r-l);box-shadow:0 18px 48px rgba(18,44,107,.22);padding:14px 16px;font-family:var(--f-ui);animation:fade .15s}
+.totop{margin-top:0;min-height:40px;font-size:14px;padding:8px}
+.tocp ol{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:2px}
+.tocp a{display:block;padding:9px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:15.5px;line-height:1.35;font-weight:600}
+.tocp a.h3{padding-left:28px;font-weight:500;font-size:14.5px;color:#4a5468}
+.tocp a.on{background:var(--brand-50);color:var(--brand)}
+.tocp .rd{font-size:13px;color:var(--mut);font-variant-numeric:tabular-nums}
+
+/* ===== Chú thích demo ===== */
+.an{display:block;font:600 12px/1.35 var(--f-ui);color:var(--warn);background:var(--warn-50);border:1px solid #f0c978;border-radius:5px;padding:4px 8px;margin:0 0 7px}
+.an.bad{color:#fff;background:var(--danger);border-color:var(--danger)}
+.an.ok{color:var(--ok);background:var(--ok-50);border-color:#a7dcc0}
+.noanno .an{display:none}
+.badwrap{outline:3px dashed var(--danger);outline-offset:3px;border-radius:6px;margin:8px 0}
+.noanno .badwrap{outline:0}
+.void{border:2px dashed #e1e5ee;border-radius:10px;min-height:1400px;color:#a3abbb;font:500 13px var(--f-ui);text-align:center;padding-top:30px}
+.noanno .void{border-color:transparent;color:transparent}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="tb">
+  <span class="t">Mô phỏng blog Tâm Anh</span>
+  <div class="g"><span>Thiết bị</span><div class="sg" data-k="dev"><button data-v="pc">PC</button><button data-v="tab">Tablet</button><button data-v="mb">Mobile</button></div></div>
+  <div class="g"><span>Bố cục</span><div class="sg" data-k="lay"><button data-v="now">Hiện tại</button><button data-v="A">A</button><button data-v="B3">B · 3 cột</button></div></div>
+  <div class="g"><span>Loại bài</span><div class="sg" data-k="art"><button data-v="kt">Kiến thức · 4 H2</button><button data-v="kt2">Kiến thức · 6 H2</button><button data-v="news">Tin tức · 0 H2</button><button data-v="short">Bài ngắn</button></div></div>
+  <div class="g"><span>Banner gắn vào bài</span><div class="sg" data-k="n"><button data-v="0">0</button><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button></div></div>
+  <div class="g"><span>Banner trong bài</span><div class="sg" data-k="rule"><button data-v="old">Quy tắc cũ</button><button data-v="new">Quy tắc mới</button></div></div>
+  <div class="g"><span>CMS trong bài</span><div class="sg" data-k="cms"><button data-v="auto">Không shortcode</button><button data-v="set">Banner set H2#4 + H2#5</button><button data-v="sc">Có shortcode</button></div></div>
+  <div class="g" id="qaGroup"><span>Hỏi đáp (PC)</span><div class="sg" data-k="qa"><button data-v="rail">Cột phải khi không có banner</button><button data-v="inline">Chèn trong bài</button></div></div>
+  <label class="ck"><input type="checkbox" id="annoT" checked> Chú thích</label>
+  <span class="note" id="tbnote"></span>
+</div>
+<div class="stage"><div class="frame" id="frame"><div class="vp" id="vp"></div><div id="fabroot"></div><div id="ovroot"></div></div></div>
+
+<script>
+(function(){
+"use strict";
+/* ============ Dữ liệu ============ */
+const IMG='https://tamanhhospital.vn/wp-content/uploads/';
+const AUTO=7000; // ms mỗi slide
+const BAN={
+ vx:{name:'Vắc xin sốt xuất huyết',pri:5,c:'#0e7490',side:IMG+'2024/09/banner-vacxin-sot-xuat-huyet-ads-right-content.jpg',inl:IMG+'2024/09/banner-vacxin-sot-xuat-huyet-ads-post.jpg',
+   rel:a=>a.tags.includes('sxh')?[2,'Tag "sốt xuất huyết", trùng chủ đề bài']:[0,'Tag "sốt xuất huyết", không trùng chủ đề bài này']},
+ ksk:{name:'Khám sức khỏe tổng quát công nghệ cao',pri:3,c:'#1d4ed8',side:IMG+'2026/09/banner-kham-suc-khoe-tong-quat-cong-nghe-cao-doc.jpg',inl:IMG+'2026/09/banner-kham-suc-khoe-tong-quat-cong-nghe-cao-ngang.jpg',
+   rel:()=>[1,'Banner toàn viện']},
+ gx:{name:'Mổ cấp cứu gãy xương 24–48 giờ',pri:4,c:'#b45309',side:IMG+'2025/07/banner-mo-cap-cuu-gay-xuong-24-48-gio-sidebar.jpg',inl:IMG+'2025/07/banner-mo-cap-cuu-gay-xuong-24-48-gio-content.jpg',
+   rel:()=>[0,'Cate phụ Cơ xương khớp, khác chuyên khoa bài']},
+ ts:{name:'Lớp tư vấn kiến thức thai sản',pri:3,c:'#be185d',side:null,inl:IMG+'2026/10/banner-ads-lop-tu-van-kien-thuc-thai-san.png',
+   rel:()=>[3,'Cate chính Sản - Phụ khoa']}};
+const SETS=[[],['vx'],['vx','ksk'],['vx','ksk','gx'],['vx','ksk','gx','ts']];
+const QA=[
+ {t:'Khám có thai 6 tuần sau chích vaccine có ảnh hưởng đến bé không?',u:'https://tamanhhospital.vn/tu-van/sau-chich-vaccine-di-kham-co-thai-6-tuan-nhu-vay-co-anh-huong-den-thai-nhi-khong/'},
+ {t:'Mũi 2 uốn ván cách ngày sinh 3 tuần thì có sao không?',u:'https://tamanhhospital.vn/tu-van/mui-2-uon-van-cach-ngay-sinh-3-tuan-thi-co-sao-khong/'},
+ {t:'Lạc nội mạc tử cung ảnh hưởng thế nào đến thai kỳ?',u:'https://tamanhhospital.vn/tu-van/lac-noi-mac-tu-cung-va-thai-ky/'}];
+const SUG=['Mẹ bầu bị sốt có dùng thuốc hạ sốt được không?','Sốt có ảnh hưởng đến thai nhi không?','Khi nào cần nhập viện?'];
+const SITES=['BVĐK Tâm Anh TP.HCM','BVĐK Tâm Anh Quận 8','PKĐK Tâm Anh Quận 7','BVĐK Tâm Anh Hà Nội','PKĐK Tâm Anh Cầu Giấy'];
+const KHOA=['Sản - Phụ khoa','Hỗ trợ sinh sản (IVF)','Nhi - Sơ sinh','Truyền nhiễm','Nội tổng quát','Tim mạch','Tiêu hóa - Gan mật','Cơ xương khớp','Mắt','Tai Mũi Họng','Khác'];
+const CATE='Sản - Phụ khoa';
+const SVC_LABEL='Ưu đãi hiện có tại Tâm Anh';
+const RELATED=['Sốt xuất huyết có ảnh hưởng đến thai nhi không?','Bà bầu bị sốt xuất huyết 3 tháng giữa: cần làm gì?','Bà bầu bị sốt xuất huyết 3 tháng cuối có nguy hiểm không?'];
+const REGIONS=[
+ {k:'hcm',name:'TP. Hồ Chí Minh',hot:['028 7102 6789','093 180 6858'],mail:'cskh@tahospital.vn',sites:[
+  {n:'BVĐK Tâm Anh TP.HCM',a:'2B Phổ Quang, P. Tân Sơn Hòa, TP.HCM',h:'T2–T7: 06:00–16:00 · Ngoài giờ 16:00–19:00 · CN 06:30–12:00',er:true},
+  {n:'BVĐK Tâm Anh Quận 8',a:'316C Phạm Hùng, P. Chánh Hưng, TP.HCM',h:'T2–T7: 07:00–16:00 · Ngoài giờ 16:00–18:00',er:true},
+  {n:'PKĐK Tâm Anh Quận 7',a:'Sunrise City, Central Tower, 25 Nguyễn Hữu Thọ, P. Tân Hưng, TP.HCM',h:''}]},
+ {k:'hn',name:'Hà Nội',hot:['024 3872 3872','024 7106 6858'],mail:'cskh@tamanhhospital.vn',sites:[
+  {n:'BVĐK Tâm Anh Hà Nội',a:'108 Hoàng Như Tiếp, P. Bồ Đề, TP. Hà Nội',h:'T2–T7: 07:30–16:30 · Ngoài giờ 16:30–19:30 · CN 07:30–16:30',er:true},
+  {n:'PKĐK Tâm Anh Cầu Giấy',a:'265 Cầu Giấy, P. Cầu Giấy, TP. Hà Nội',h:'T2–T7: 07:00–16:00 · Ngoài giờ 16:00–20:00 · CN 07:00–12:00'}]}];
+const p=x=>({t:'p',x}),h2=x=>({t:'h2',x}),h3=x=>({t:'h3',x}),ul=items=>({t:'ul',items}),fig=x=>({t:'fig',x}),alert=x=>({t:'alert',x});
+const ARTS={
+ kt:{title:'Bị sốt xuất huyết khi mang thai 3 tháng đầu có sao không?',date:'26/10/2026',doctor:true,tags:['sxh'],scAt:'Mẹ bầu cần đi khám sớm',scQa:'Hướng dẫn xử lý',scBook:'Nên chú ý gì',feat:IMG+'2026/09/bi-sot-xuat-huyet-khi-mang-thai-3-thang-dau.jpg',
+  sapo:'Sốt xuất huyết khi mang thai khiến nhiều mẹ bầu lo lắng, nhất là trong 3 tháng đầu, giai đoạn các cơ quan của thai nhi đang hình thành. Bài viết giúp mẹ nhận biết triệu chứng, biết khi nào cần đến bệnh viện và cách phòng bệnh trong mùa mưa.',
+  blocks:[
+  h2('Bị sốt xuất huyết khi mang thai 3 tháng đầu có sao không?'),
+  p('Sốt xuất huyết do virus Dengue gây ra, lây truyền qua vết đốt của muỗi vằn Aedes. Phần lớn người bệnh hồi phục sau 1–2 tuần, nhưng ở phụ nữ mang thai, bệnh cần được theo dõi chặt hơn vì sốt cao kéo dài, mất nước và rối loạn đông máu có thể ảnh hưởng đến cả mẹ và thai.'),
+  h3('Ảnh hưởng đến sức khỏe mẹ bầu'),
+  p('Trong giai đoạn nguy hiểm, thành mạch tăng tính thấm khiến huyết tương thoát ra ngoài lòng mạch, tiểu cầu giảm và dễ chảy máu. Ở thai phụ, những thay đổi sinh lý của thai kỳ có thể làm các dấu hiệu này khó nhận biết hơn, nên mẹ cần được bác sĩ đánh giá sớm.'),
+  h3('Ảnh hưởng đến thai nhi'),
+  p('Một số nghiên cứu ghi nhận sốt xuất huyết trong thai kỳ liên quan đến nguy cơ sảy thai, sinh non và trẻ nhẹ cân cao hơn. Mức độ ảnh hưởng phụ thuộc vào thời điểm mắc bệnh, mức độ nặng và việc mẹ có được theo dõi, điều trị kịp thời hay không.'),
+  p('Vì vậy, khi có dấu hiệu sốt trong 3 tháng đầu, mẹ bầu không nên tự điều trị tại nhà mà cần đi khám để được xét nghiệm và hướng dẫn theo dõi phù hợp.'),
+  fig('Mẹ bầu cần đi khám sớm khi sốt cao trong 3 tháng đầu thai kỳ (ảnh minh họa)'),
+  h2('Mẹ bầu giai đoạn 3 tháng đầu nên chú ý triệu chứng sốt xuất huyết nào?'),
+  p('Triệu chứng sốt xuất huyết ở mẹ bầu thường diễn tiến qua 3 giai đoạn: sốt, nguy hiểm và hồi phục. Giai đoạn nguy hiểm thường rơi vào ngày thứ 3–7 của bệnh, đúng lúc cơn sốt bắt đầu giảm, nên nhiều người chủ quan.'),
+  h3('Giai đoạn sốt'),
+  p('Các biểu hiện thường gặp trong giai đoạn sốt gồm:'),
+  ul(['Sốt cao đột ngột 39–40°C, khó hạ.','Đau đầu, đau nhức sau hốc mắt.','Đau cơ, đau khớp toàn thân.','Mệt mỏi, chán ăn.','Buồn nôn hoặc nôn.','Da xung huyết, nổi chấm đỏ li ti.','Chảy máu chân răng hoặc chảy máu mũi.','Đau bụng âm ỉ.']),
+  h3('Giai đoạn nguy hiểm'),
+  p('Mẹ bầu cần đến bệnh viện ngay nếu có một trong các dấu hiệu cảnh báo sau:'),
+  ul(['Đau bụng nhiều hoặc đau vùng gan.','Nôn liên tục, không ăn uống được.','Chảy máu âm đạo, chảy máu cam hoặc nôn ra máu.','Li bì, vật vã hoặc khó thở.','Tiểu ít, chân tay lạnh.']),
+  h2('Hướng dẫn xử lý khi bị sốt xuất huyết khi mang thai 3 tháng đầu'),
+  p('Hiện chưa có thuốc điều trị đặc hiệu cho sốt xuất huyết. Việc điều trị tập trung vào hạ sốt, bù dịch và theo dõi sát các chỉ số máu để phát hiện sớm biến chứng.'),
+  p('Tại nhà, mẹ bầu cần thực hiện theo hướng dẫn của bác sĩ:'),
+  ul(['Hạ sốt bằng paracetamol theo liều bác sĩ chỉ định, kết hợp lau mát.','Không dùng aspirin, ibuprofen vì làm tăng nguy cơ chảy máu.','Uống đủ nước, oresol, nước trái cây.','Nghỉ ngơi, ăn thức ăn mềm, dễ tiêu.','Tái khám và xét nghiệm máu đúng hẹn.']),
+  alert('Không tự ý truyền dịch hoặc dùng thuốc khi chưa có chỉ định. Khi có dấu hiệu cảnh báo, mẹ bầu cần đến cơ sở y tế gần nhất.'),
+  fig('Theo dõi tiểu cầu và hematocrit giúp phát hiện sớm giai đoạn nguy hiểm (ảnh minh họa)'),
+  h2('Nên chú ý gì để phòng ngừa sốt xuất huyết ở 3 tháng đầu thai kỳ?'),
+  p('Cách phòng bệnh hiệu quả nhất là tránh để muỗi đốt và loại bỏ nơi muỗi sinh sản:'),
+  ul(['Ngủ màn cả ban ngày và ban đêm.','Mặc quần áo dài tay, sáng màu.','Đậy kín dụng cụ chứa nước, thả cá diệt lăng quăng.','Dùng sản phẩm chống muỗi phù hợp cho thai phụ theo tư vấn của bác sĩ.']),
+  p('Mẹ bầu nên khám thai đầy đủ theo lịch và trao đổi với bác sĩ về các biện pháp phòng bệnh truyền nhiễm trước và trong thai kỳ.')]},
+ kt2:{title:'Thai 12 tuần: thai nhi phát triển thế nào và mẹ cần lưu ý gì?',date:'03/11/2026',doctor:true,tags:['thai-ky'],scAt:'Siêu âm đo chiều dài',scQa:'Thay đổi của mẹ bầu',scBook:'Dinh dưỡng cho mẹ bầu',feat:null,
+  sapo:'Tuần thai thứ 12 khép lại tam cá nguyệt đầu tiên. Đây là giai đoạn thai nhi đã hình thành gần đủ các cơ quan và mẹ bầu bắt đầu bớt mệt mỏi.',
+  blocks:[
+  h2('Thai nhi 12 tuần phát triển như thế nào?'),
+  p('Ở tuần 12, thai nhi đã hình thành gần như đầy đủ các cơ quan. Tim thai đập đều, các ngón tay, ngón chân đã tách rời và thai bắt đầu có những cử động nhỏ, dù mẹ chưa cảm nhận được.'),
+  p('Hệ thần kinh tiếp tục phát triển nhanh. Các phản xạ như mút, nắm tay bắt đầu hình thành, ruột dần di chuyển vào trong ổ bụng.'),
+  h2('Kích thước thai nhi 12 tuần'),
+  p('Chiều dài đầu mông của thai khoảng 5–6 cm, cân nặng khoảng 14 g. Bác sĩ dùng chỉ số chiều dài đầu mông trên siêu âm để xác định tuổi thai và dự kiến ngày sinh chính xác hơn.'),
+  fig('Siêu âm đo chiều dài đầu mông giúp xác định tuổi thai (ảnh minh họa)'),
+  h2('Thay đổi của mẹ bầu ở tuần thai 12'),
+  p('Nhiều mẹ bầu bắt đầu giảm buồn nôn khi bước sang cuối tam cá nguyệt thứ nhất. Tử cung lớn dần lên khỏi khung chậu nên vòng bụng có thể nhô nhẹ.'),
+  p('Một số thay đổi thường gặp ở giai đoạn này:'),
+  ul(['Bớt ốm nghén, ăn uống ngon miệng hơn.','Tăng tiết dịch âm đạo.','Táo bón, đầy hơi.','Thay đổi cảm xúc thất thường.']),
+  h2('Các mốc sàng lọc trước sinh tuần 11–14'),
+  p('Đây là thời điểm siêu âm đo độ mờ da gáy và có thể làm xét nghiệm sàng lọc trước sinh để đánh giá nguy cơ một số bất thường nhiễm sắc thể.'),
+  p('Cửa sổ đo độ mờ da gáy chỉ kéo dài đến hết tuần 13 cộng 6 ngày, vì vậy mẹ bầu nên sắp xếp lịch khám thai đúng mốc.'),
+  h2('Dinh dưỡng cho mẹ bầu tuần 12'),
+  p('Mẹ bầu cần tiếp tục bổ sung axit folic theo chỉ định, ăn đủ đạm, rau xanh, trái cây và uống đủ nước. Hạn chế đồ sống, tái và tránh đồ uống có cồn.'),
+  ul(['Thịt nạc, cá đã nấu chín kỹ.','Trứng, sữa và chế phẩm từ sữa.','Rau xanh đậm.','Ngũ cốc nguyên hạt.']),
+  h2('Lưu ý sinh hoạt ở tuần thai 12'),
+  p('Vận động nhẹ như đi bộ, yoga bầu giúp mẹ thoải mái hơn. Mẹ bầu nên ngủ đủ giấc, tránh mang vác nặng và hỏi ý kiến bác sĩ trước khi dùng bất kỳ loại thuốc nào.'),
+  p('Nếu thấy ra máu âm đạo, đau bụng dưới nhiều hoặc sốt cao, mẹ bầu cần đến cơ sở y tế để được kiểm tra.')]},
+ news:{title:'Mùa mưa, nhiều thai phụ nhập viện vì sốt xuất huyết',date:'05/11/2026',doctor:false,tags:['sxh'],scAt:'Nhiều thai phụ có thói quen',scQa:'Theo bác sĩ Sản',scBook:'Khi có dấu hiệu đau bụng',feat:IMG+'2026/09/bi-sot-xuat-huyet-khi-mang-thai-3-thang-dau.jpg',
+  sapo:'Số thai phụ đến khám vì sốt cao tăng trong những tuần mưa nhiều, không ít trường hợp được chẩn đoán sốt xuất huyết khi đã sốt 2–3 ngày.',
+  blocks:[
+  p('Những tuần gần đây, khoa Sản - Phụ khoa ghi nhận nhiều thai phụ đến khám vì sốt cao kéo dài. Phần lớn đã tự uống thuốc hạ sốt tại nhà 2–3 ngày trước khi đến bệnh viện, khi cơ thể bắt đầu mệt lả hoặc xuất hiện chấm đỏ trên da.'),
+  p('Chị H. (32 tuổi, mang thai 10 tuần) sốt 39°C liên tục hai ngày. Nghĩ mình bị cảm, chị chỉ uống thuốc hạ sốt và nghỉ ở nhà. Đến ngày thứ ba, chị thấy đau bụng, chảy máu chân răng nên cùng chồng đến bệnh viện.'),
+  p('Kết quả xét nghiệm cho thấy chị dương tính với virus Dengue, tiểu cầu giảm. Chị được nhập viện theo dõi, bù dịch và kiểm tra tình trạng thai bằng siêu âm. Sau một tuần, các chỉ số ổn định và thai phát triển bình thường.'),
+  p('Theo bác sĩ Sản - Phụ khoa, sốt xuất huyết ở thai phụ cần được theo dõi sát hơn người bình thường. Giai đoạn nguy hiểm thường đến đúng lúc cơn sốt giảm, khiến nhiều người nghĩ mình đã khỏi bệnh.'),
+  p('Ở 3 tháng đầu thai kỳ, sốt cao kéo dài và mất nước có thể ảnh hưởng đến thai. Vì vậy bác sĩ khuyến cáo thai phụ sống trong vùng có dịch không tự điều trị tại nhà khi sốt cao không rõ nguyên nhân.'),
+  fig('Thai phụ được theo dõi tiểu cầu hằng ngày trong giai đoạn nguy hiểm (ảnh minh họa)'),
+  p('Nhiều thai phụ có thói quen dùng thuốc giảm đau quen thuộc khi sốt. Đây là điều cần tránh vì một số thuốc như aspirin, ibuprofen làm tăng nguy cơ chảy máu ở người bệnh sốt xuất huyết.'),
+  p('Để phòng bệnh trong mùa mưa, bác sĩ lưu ý mẹ bầu một số điểm sau:'),
+  ul(['Ngủ màn kể cả ban ngày.','Mặc quần áo dài tay khi ra ngoài.','Loại bỏ nước đọng quanh nhà.','Đi khám ngay khi sốt cao không rõ nguyên nhân.']),
+  p('Khi có dấu hiệu đau bụng, nôn nhiều, chảy máu hoặc mệt lả, thai phụ cần đến cơ sở y tế gần nhất để được xử trí kịp thời.')]},
+ short:{title:'Mẹ bầu có dùng được kem chống muỗi không?',date:'02/11/2026',doctor:true,tags:['sxh'],scAt:'Nếu bị sốt cao',feat:null,
+  sapo:'Mùa mưa là thời điểm muỗi phát triển mạnh, nhiều mẹ bầu băn khoăn có nên dùng kem chống muỗi.',
+  blocks:[
+  p('Một số hoạt chất chống muỗi đã được các cơ quan y tế đánh giá là dùng được cho phụ nữ mang thai khi dùng đúng hướng dẫn trên nhãn. Mẹ bầu nên hỏi bác sĩ trước khi chọn sản phẩm, đặc biệt nếu có tiền sử dị ứng da.'),
+  p('Khi dùng, chỉ thoa lên vùng da hở, không thoa lên vết thương và rửa sạch khi về nhà. Kết hợp ngủ màn và mặc quần áo dài tay giúp giảm đáng kể số lần bị muỗi đốt.'),
+  p('Nếu bị sốt cao sau khi bị muỗi đốt, mẹ bầu cần đi khám sớm để được xét nghiệm, không tự dùng thuốc tại nhà.')]}};
+
+/* ============ Trạng thái ============ */
+let S={dev:'pc',lay:'B3',art:'kt',n:2,rule:'new',cms:'sc',qa:'rail',anno:true};
+try{const s=JSON.parse(localStorage.getItem('ta-mock2')||'null');if(s)S=Object.assign(S,s)}catch(e){}
+if(S.lay==='B')S.lay='B3';
+const save=()=>{try{localStorage.setItem('ta-mock2',JSON.stringify(S))}catch(e){}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const words=s=>String(s).trim().split(/\s+/).filter(Boolean).length;
+let uid=0;const nid=()=>'u'+(++uid);
+let LAY='B3';
+const vp=document.getElementById('vp'),frame=document.getElementById('frame'),ovroot=document.getElementById('ovroot'),fabroot=document.getElementById('fabroot');
+const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const A=()=>ARTS[S.art];
+function ranked(){const art=A();const all=SETS[S.n].map(k=>{const [rel,match]=BAN[k].rel(art);return Object.assign({k},BAN[k],{rel,match,score:rel*BAN[k].pri})});
+ return {all,ok:all.filter(b=>b.rel>0).sort((a,b)=>b.score-a.score),no:all.filter(b=>b.rel===0)}}
+
+/* ============ Quy tắc chèn ============ */
+const OLD_LINES=[9,13];
+function oldSlots(art){let line=1;const out=[];
+ art.blocks.forEach((b,bi)=>{
+  if(b.t==='p'){line++;OLD_LINES.forEach((L,k)=>{if(line===L)out.push({bi,li:-1,k,line:L})})}
+  if(b.t==='ul')b.items.forEach((_,li)=>{line++;OLD_LINES.forEach((L,k)=>{if(line===L)out.push({bi,li,k,line:L})})})});
+ return out}
+function measure(art){const bl=art.blocks,wc=bl.map(b=>b.t==='ul'?words(b.items.join(' ')):b.t==='fig'?0:words(b.x||''));
+ const sw=words(art.sapo),total=wc.reduce((a,b)=>a+b,0)+sw;
+ return {bl,total,before:i=>sw+wc.slice(0,i).reduce((a,b)=>a+b,0),h2s:bl.map((b,i)=>b.t==='h2'?i:-1).filter(i=>i>=0),pCount:bl.filter(b=>b.t==='p').length}}
+function newSlots(art){const M=measure(art),{bl,total,before,h2s}=M;
+ if(total<350||M.pCount<4)return {mode:'end',slots:[]};
+ const slots=[],maxSlots=total>=900?2:1,targets=[.3,.65];
+ if(h2s.length>=3){
+  for(const t of targets){if(slots.length>=maxSlots)break;
+   const c=h2s.slice(1).find(i=>before(i)/total>=t&&!slots.some(s=>s.bi===i)&&(!slots.length||before(i)-before(slots[slots.length-1].bi)>=300)&&!/kết luận|câu hỏi thường gặp/i.test(bl[i].x));
+   if(c!=null)slots.push({bi:c,why:`trước H2 #${h2s.indexOf(c)+1}, mốc ${Math.round(before(c)/total*100)}% bài`})}
+  return {mode:'h2',slots}}
+ const cands=[];for(let i=1;i<bl.length;i++){const a=bl[i-1],b=bl[i];if(a.t==='p'&&b.t==='p'&&!/:\s*$/.test(a.x)&&before(i)>=150)cands.push(i)}
+ for(const t of targets){if(slots.length>=maxSlots)break;let best=null,bd=1;
+  cands.forEach(i=>{const d=Math.abs(before(i)/total-t);if(d<bd&&!slots.some(s=>Math.abs(before(s.bi)-before(i))<300)){bd=d;best=i}});
+  if(best!=null)slots.push({bi:best,why:`giữa 2 đoạn văn, mốc ${Math.round(before(best)/total*100)}% bài (bài không đủ 3 H2)`})}
+ return {mode:'para',slots}}
+// Form đặt lịch + thẻ hỏi đáp trên mobile/tablet
+const ACTION=/điều trị|xử lý|xử trí|khi nào|đi khám|gặp bác sĩ|nhập viện|chẩn đoán|ở đâu|địa chỉ|chi phí/i;
+function ctxSlots(art,used){const M=measure(art),{bl,total,before,h2s}=M;let form='end',fwhy,qa=null;
+ if(h2s.length<3){fwhy='P3 · bài dưới 3 H2 → form ở cuối bài, trước hộp thông tin bệnh viện';return {form,fwhy,qa}}
+ const k=h2s.findIndex(i=>ACTION.test(bl[i].x));
+ if(k>=0){const nx=h2s[k+1];
+  if(nx==null){fwhy=`P1 · mục "${bl[h2s[k]].x.slice(0,38)}…" là H2 cuối → form ở cuối bài`}
+  else if(before(nx)/total>=.4&&!used.includes(nx)){form=nx;fwhy=`P1 · ngay sau mục có từ khóa hành động "${bl[h2s[k]].x.slice(0,38)}…"`}}
+ if(!fwhy){const c=h2s.slice(1).find(i=>before(i)/total>=.6&&!used.includes(i));
+  if(c!=null){form=c;fwhy=`P2 · không có mục hành động → trước H2 #${h2s.indexOf(c)+1} (H2 đầu tiên sau mốc 60%)`}else fwhy='P2 · không còn H2 phù hợp → cuối bài'}
+ const free=h2s.slice(1).filter(i=>!used.includes(i)&&i!==form&&Math.abs(h2s.indexOf(i)-h2s.indexOf(form))>=1);
+ if(free.length){let best=free[0],bd=9;free.forEach(i=>{const d=Math.abs(before(i)/total-.5);if(d<bd){bd=d;best=i}});
+  if(form==='end'||Math.abs(h2s.indexOf(best)-h2s.indexOf(form))>=1)qa=best}
+ return {form,fwhy,qa}}
+
+/* ============ Icon ============ */
+const ICON={
+ fb:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#1877f2"/><path d="M13.4 19v-6h2l.3-2.4h-2.3V9.2c0-.7.2-1.2 1.2-1.2h1.2V5.9c-.2 0-1-.1-1.8-.1-1.8 0-3 1.1-3 3.1v1.7H9V13h2v6z" fill="#fff"/></svg>',
+ zl:'<svg viewBox="0 0 24 24"><path d="M12 2.5c5.5 0 10 3.9 10 8.7s-4.5 8.7-10 8.7c-1 0-1.9-.1-2.8-.4L5 21.3l1.1-3.5C3.6 16.2 2 13.8 2 11.2 2 6.4 6.5 2.5 12 2.5z" fill="#0068ff"/><path d="M8 8h7.6L8.8 14.6H16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ ms:'<svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.1 2 11.2c0 2.9 1.4 5.5 3.7 7.2V22l3.4-1.9c.9.3 1.9.4 2.9.4 5.5 0 10-4.1 10-9.2S17.5 2 12 2z" fill="#0a7cff"/><path d="M5.6 14.2l5-5.4 2.7 2.6 4.9-2.6-5 5.4-2.7-2.6z" fill="#fff"/></svg>',
+ ln:'<svg viewBox="0 0 24 24" fill="none" stroke="#4a5468" stroke-width="2" stroke-linecap="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
+ tw:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#111"/><path d="M7.5 7.5l9 9M16.5 7.5l-9 9" stroke="#fff" stroke-width="2"/></svg>',
+ pi:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#e60023"/><text x="12" y="16.5" font-family="Georgia" font-weight="700" font-size="13" fill="#fff" text-anchor="middle">P</text></svg>',
+ up:'<svg viewBox="0 0 24 24" fill="none" stroke="#4a5468" stroke-width="2" stroke-linecap="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
+ na:'<svg viewBox="0 0 24 24" fill="none" stroke="#1c3f94" stroke-width="2" stroke-linecap="round"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v7h14v-7"/></svg>',
+ phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>',
+ chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>',
+ cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M9 15l2 2 4-4"/></svg>',
+ list:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#1c3f94" stroke-width="2.2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2" fill="#1c3f94"/><circle cx="4.5" cy="12" r="1.2" fill="#1c3f94"/><circle cx="4.5" cy="18" r="1.2" fill="#1c3f94"/></svg>'};
+const shBtn=(k,label)=>`<button class="sh" type="button" data-act="share" data-k="${k}" aria-label="${label}" title="${label}">${ICON[k]}</button>`;
+const an=(t,cls='')=>`<span class="an ${cls}">${t}</span>`;
+
+/* ============ Thành phần ============ */
+function bnrImg(b,kind){const src=kind==='side'?b.side:b.inl;
+ return `<a class="bnr ${kind}" href="#" data-act="bclick" data-k="${b.k}">${src?`<img class="bimg" src="${src}" alt="${esc(b.name)}" draggable="false" data-c="${b.c}">`:`<span class="bfb" style="background:${b.c}"><b>${esc(b.name)}</b><span>Chưa có bản ${kind==='side'?'dọc':'ngang'} (mô phỏng)</span></span>`}</a>`}
+function carousel(list,kind){if(!list.length)return '';const many=list.length>1;
+ return `<div class="car car-${kind}" data-car>
+ <div class="car-top"><span class="svc-lbl">${SVC_LABEL}</span>${many?`<span class="car-n" data-n>1/${list.length}</span>`:''}</div>
+ <div class="car-stage"><div class="car-view"><div class="car-strip">${list.map(b=>`<div class="car-sl">${bnrImg(b,kind)}</div>`).join('')}</div></div>
+ ${many&&kind==='inl'?`<button class="car-ar prev" type="button" data-act="cprev" aria-label="Banner trước">‹</button><button class="car-ar next" type="button" data-act="cnext" aria-label="Banner sau">›</button>`:''}</div>
+ ${many?`<div class="car-dots">${list.map((b,i)=>`<button type="button" data-act="cgo" data-i="${i}" aria-label="Banner ${i+1}: ${esc(b.name)}"><i></i></button>`).join('')}</div>`:''}</div>`}
+function booking(){const id=nid(),art=A();
+ return `<form class="card bk" data-form="book" novalidate>
+ <div class="bk-h"><b>Đặt lịch khám</b><span>CSKH gọi lại xác nhận lịch trong giờ làm việc</span></div>
+ <label class="fl" for="${id}k">Chuyên khoa</label><select class="inp" id="${id}k" name="khoa" data-kval>${KHOA.map(k=>`<option${k===CATE?' selected':''}>${k}</option>`).join('')}</select>
+ <label class="fl" for="${id}n">Họ và tên</label><input class="inp" type="text" id="${id}n" autocomplete="name" placeholder="Nguyễn Thị Lan" data-name>
+ <label class="fl" for="${id}t">Số điện thoại</label><input class="inp" type="tel" id="${id}t" inputmode="numeric" autocomplete="tel" placeholder="09xx xxx xxx" data-tel><span class="err" hidden>Nhập đủ 10 số, bắt đầu bằng 03, 05, 07, 08 hoặc 09</span>
+ <label class="fl" for="${id}s">Cơ sở khám</label><select class="inp" id="${id}s" data-site>${SITES.map(s=>`<option>${s}</option>`).join('')}</select>
+ <span class="fl">Thời gian mong muốn</span><div class="chips" data-single>${['Sớm nhất','Sáng','Chiều','Ngoài giờ'].map((t,i)=>`<button type="button" aria-pressed="${i===0}">${t}</button>`).join('')}</div>
+ ${art.doctor?`<label class="chk"><input type="checkbox" id="${id}d"> Muốn khám với bác sĩ tư vấn bài viết</label>`:''}
+ <label class="chk"><input type="checkbox" id="${id}c" data-consent> Tôi đồng ý với Chính sách bảo vệ dữ liệu cá nhân của Tâm Anh</label><span class="err" hidden data-cerr>Cần đồng ý để gửi yêu cầu</span>
+ <input type="hidden" name="note" value="Tham khảo bài: ${esc(art.title)}">
+ <button class="btn" type="submit">Gửi yêu cầu đặt lịch</button>
+ <p class="sos">Cấp cứu: gọi 115 hoặc đến khoa Cấp cứu 24/7</p></form>`}
+function ask(n,open){const id=nid();
+ return `<div class="card" data-ask><div class="qa-h"><b>Bác sĩ đã trả lời</b><span>${CATE}</span></div>
+ <ul class="qa">${QA.slice(0,n).map(q=>`<li><a href="${q.u}" target="_blank" rel="noopener">${esc(q.t)}</a><span>Bác sĩ ${CATE} trả lời</span></li>`).join('')}</ul>
+ <button class="btn gh" type="button" data-act="ask" ${open?'hidden':''}>Đặt câu hỏi cho bác sĩ</button>
+ <form data-form="ask" ${open?'':'hidden'} novalidate>
+  <label class="fl" for="${id}q">Câu hỏi của bạn</label><textarea class="inp" id="${id}q" data-q placeholder="Mô tả triệu chứng, tuần thai, thuốc đang dùng…"></textarea>
+  <div class="chips" style="margin-top:7px">${SUG.map(s=>`<button type="button" data-sug>${esc(s)}</button>`).join('')}</div>
+  <div data-step2 hidden>
+   <label class="fl" for="${id}n">Họ và tên</label><input class="inp" type="text" id="${id}n" autocomplete="name" data-name>
+   <label class="fl" for="${id}a">Tuổi</label><input class="inp" type="number" id="${id}a" inputmode="numeric" min="1" max="120">
+   <label class="fl" for="${id}c">SĐT hoặc email</label><input class="inp" type="text" id="${id}c" autocomplete="tel">
+   <label class="chk"><input type="checkbox" data-consent> Tôi đồng ý với Chính sách bảo vệ dữ liệu cá nhân của Tâm Anh</label><span class="err" hidden data-cerr>Cần đồng ý để gửi câu hỏi</span>
+   <button class="btn" type="submit">Gửi câu hỏi</button></div>
+  <p class="sos">Câu trả lời mang tính tham khảo, không thay cho khám trực tiếp.</p></form></div>`}
+function hospitals(tabs){
+ const col=(r,hide)=>`<section class="hreg" data-reg="${r.k}" ${hide?'hidden':''}><div class="hreg-h"><b>${r.name}</b><span>${r.sites.length} cơ sở</span></div>
+  <ul class="hsites">${r.sites.map(s=>`<li><div class="hs-n">${s.n}${s.er?'<span class="er">Cấp cứu 24/7</span>':''}</div><div class="hs-a">${s.a}</div>${s.h?`<div class="hs-t">${s.h}</div>`:''}<a class="hs-map" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.n+', '+s.a)}" target="_blank" rel="noopener">Chỉ đường ›</a></li>`).join('')}</ul>
+  <div class="hreg-f">${r.hot.map(h=>`<a class="hot-btn" href="tel:${h.replace(/\s/g,'')}" data-act="toast" data-m="Gọi ${h}">${ICON.phone}${h}</a>`).join('')}<span class="hmail">${r.mail}</span></div></section>`;
+ return `<div class="hbox">${S.lay==='now'?'':an(tabs?'Mobile: 2 tab TP.HCM / Hà Nội, mặc định theo cơ sở của bác sĩ tư vấn':'PC: 2 cột TP.HCM | Hà Nội')}
+ <div class="hbox-t">Hệ thống Bệnh viện Đa khoa Tâm Anh<span>Cấp cứu 24/7</span></div>
+ ${tabs?`<div class="htabs" role="tablist">${REGIONS.map((r,i)=>`<button type="button" role="tab" data-act="htab" data-k="${r.k}" aria-selected="${i===0}">${r.name}</button>`).join('')}</div>${REGIONS.map((r,i)=>col(r,i>0)).join('')}`
+ :`<div class="hcols">${REGIONS.map(r=>col(r,false)).join('')}</div>`}</div>`}
+const hospitalsNow=()=>`<div style="background:var(--tint);border-radius:6px;padding:14px;font-size:14px;margin:22px 0">${an('Hiện tại: khối chữ liền, 5 cơ sở dồn chung')}<b style="color:var(--brand)">HỆ THỐNG BỆNH VIỆN ĐA KHOA TÂM ANH</b><br>Bệnh viện Đa khoa Tâm Anh Hà Nội: 108 Phố Hoàng Như Tiếp, Phường Bồ Đề, TP. Hà Nội. Hotline: 024 3872 3872 – 024 7106 6858<br>Bệnh viện Đa khoa Tâm Anh TP.HCM: 2B Phổ Quang, Phường Tân Sơn Hòa, TP.HCM. Hotline: 0287 102 6789 – 093 180 6858<br>Phòng khám Đa khoa Tâm Anh Quận 7: Sunrise City, Central Tower, 25 Nguyễn Hữu Thọ, Phường Tân Hưng, TP.HCM…</div>`;
+
+/* ============ Bài viết ============ */
+function tocItems(art){const out=[];let n=-1,m=0;art.blocks.forEach(b=>{if(b.t==='h2'){n++;m=0;out.push({lvl:2,x:b.x,id:'s'+n,n})}else if(b.t==='h3'&&n>=0){out.push({lvl:3,x:b.x,id:'s'+n+'-'+(m++),n})}});return out}
+function article(mode){
+ const art=A(),R=ranked(),old=S.rule==='old',mob=mode!=='pc';
+ const insBefore={},insInLi={},insAfter={};const push=(o,k,h)=>{(o[k]=o[k]||[]).push(h)};
+ let tail='',used=[];
+ const h2idx=art.blocks.map((b,i)=>b.t==='h2'?i:-1).filter(i=>i>=0),cmsSet=S.cms==='set';
+ const CFG=[[R.all[0],4],[R.all[1],5]].filter(([b])=>b);
+ if(old&&cmsSet){CFG.forEach(([b,n],k)=>{const bi=h2idx[n-1];
+   if(bi==null){tail+=an(`CMS đặt "${b.name}" trên H2 #${n} nhưng bài chỉ có ${h2idx.length} H2 → banner này không hiện`,'bad');return}
+   const dup=!mob,close=k===1&&CFG[0]&&h2idx[CFG[0][1]-1]!=null;
+   const msg=`CMS: "${b.name}" đặt trên H2 #${n}`+(dup?' · TRÙNG chiến dịch đang treo ở sidebar':'')+(close?' · 2 banner chỉ cách nhau 1 mục':'');
+   push(insBefore,bi,`<div class="${dup||close?'badwrap':''}">${an(msg,dup||close?'bad':'')}${bnrImg(b,'inl')}</div>`)})}
+ else if(old){const sl=oldSlots(art);const dup=!mob;sl.forEach(s=>{const b=R.all[s.k];if(!b)return;
+   const msg=(s.li>=0?`CMS hiện tại (set_element: thẻ p thứ ${s.line}, đếm cả p nằm trong danh sách) → banner nằm TRONG danh sách, cắt ngang nội dung`:`CMS hiện tại (set_element: thẻ p thứ ${s.line})`)+(dup?` · TRÙNG chiến dịch "${b.name}" đang treo ở sidebar`:'');
+   const h=`<div class="${s.li>=0||dup?'badwrap':''}">${an(msg,s.li>=0||dup?'bad':'')}${bnrImg(b,'inl')}</div>`;
+   if(s.li>=0)push(insInLi,s.bi+':'+s.li,h);else push(insAfter,s.bi,h)});
+  if(!sl.length&&R.all.length)tail+=an('CMS hiện tại: bài không đủ số thẻ p theo cấu hình element_number nên banner trong bài không hiện','bad');}
+ else if(R.ok.length){const ns=newSlots(art);
+  let cmsBi=null,cmsWhy='';
+  const scBi=S.cms==='sc'&&art.scAt?art.blocks.findIndex(b=>(b.x||'').startsWith(art.scAt)):-1;
+  if(scBi>=0){cmsBi=scBi;cmsWhy=mob?'Biên tập chèn shortcode [ta_banner] tại đây → slide hiện đúng vị trí này, bỏ qua quy tắc tự động':'PC: shortcode [ta_banner] vẫn in ra khối banner nhưng CSS ẩn ở màn ≥1200px; banner đã nằm ở cột phải'}
+  else if(cmsSet&&mob){const valid=CFG.filter(([b,n])=>n>=2&&h2idx[n-1]!=null).map(([b,n])=>n);
+   if(valid.length){const n=Math.min(...valid);cmsBi=h2idx[n-1];
+    cmsWhy=`CMS đặt ${CFG.map(([b,n])=>`"${b.name}" ở H2 #${n}`).join(' và ')} → gom thành 1 slide, đặt ở vị trí sớm nhất có trong bài (H2 #${n})`+(CFG.some(([b,n])=>h2idx[n-1]==null)?'. Vị trí H2 không tồn tại trong bài vẫn được gom vào slide':'')+'. Các vị trí còn lại bỏ trống'}}
+  if(!mob&&scBi>=0)push(insBefore,scBi,an(cmsWhy,'ok'));
+  else if(!mob){const s=ns.slots[0];const note=an('PC: không chèn banner trong bài. Cột phải sticky đã hiện các banner này suốt quá trình đọc, chèn thêm sẽ trùng chiến dịch'+(cmsSet?'. Vị trí CMS đặt sẵn được bỏ qua trên PC':''),'ok');
+   if(s)push(insBefore,s.bi,note);else tail+=note}
+  else if(cmsBi!=null){used.push(cmsBi);push(insBefore,cmsBi,`<div class="inl-ad">${an(cmsWhy,'ok')}${carousel(R.ok,'inl')}</div>`)}
+  else if(ns.mode==='end')tail+=`<div class="inl-ad">${an('Bài ngắn (dưới 350 từ hoặc dưới 4 đoạn): không chèn giữa bài, đặt cuối bài','ok')}${carousel(R.ok,'inl')}</div>`;
+  else ns.slots.forEach((s,i)=>{used.push(s.bi);if(i>0)return;
+   push(insBefore,s.bi,`<div class="inl-ad">${an(`Mobile không có cột phải → đây là vị trí banner duy nhất · ${s.why}${R.ok.length>1?` · slide ${R.ok.length} banner, vuốt hoặc bấm mũi tên`:''}`,'ok')}${carousel(R.ok,'inl')}</div>`)})}
+ const scFind=s=>S.cms==='sc'&&s?art.blocks.findIndex(b=>(b.x||'').startsWith(s)):-1;
+ const scQa=scFind(art.scQa),scBk=scFind(art.scBook);
+ if(mob&&S.lay!=='now'){
+  // Mobile: form đặt lịch + thẻ hỏi đáp chỉ hiện khi biên tập chèn shortcode
+  if(scQa>=0)push(insBefore,scQa,`<div class="ctx">${an('Shortcode [ta_qa] do biên tập chèn → thẻ "Bác sĩ đã trả lời" hiện tại đây','ok')}${ask(2)}</div>`);
+  if(scBk>=0)push(insBefore,scBk,`<div class="ctx">${an('Shortcode [ta_booking] do biên tập chèn → form đặt lịch hiện tại đây','ok')}${booking()}</div>`);
+  const miss=[scBk<0?'[ta_booking]':'',scQa<0?'[ta_qa]':''].filter(Boolean);
+  if(miss.length)tail+=an(`Bài không có shortcode ${miss.join(' và ')} → không chèn ${scBk<0&&scQa<0?'form đặt lịch và thẻ hỏi đáp':scBk<0?'form đặt lịch':'thẻ hỏi đáp'} vào bài. Thanh đáy đã có nút Đặt lịch khám và Chat tư vấn`,'ok')}
+ else if(!mob&&S.qa==='inline'&&S.lay!=='now'){const c=ctxSlots(art,used);const at=scQa>=0?scQa:c.qa;
+  const qh=`<div class="ctx">${an('Thẻ hỏi đáp (PC · option chèn trong bài) · '+(scQa>=0?'theo shortcode [ta_qa]':c.qa!=null?'trước H2 gần mốc 50% bài':'bài dưới 3 H2 → cuối bài'),'ok')}${ask(3)}</div>`;
+  if(at!=null)push(insBefore,at,qh);else tail+=qh}
+ const toc=tocItems(art),h2list=toc.filter(t=>t.lvl===2);let n2=-1,n3=0;
+ let body='';
+ art.blocks.forEach((b,bi)=>{(insBefore[bi]||[]).forEach(h=>body+=h);
+  if(b.t==='h2'){n2++;n3=0;body+=`<h2 id="s${n2}" data-h="${n2}">${esc(b.x)}</h2>`}
+  else if(b.t==='h3')body+=`<h3 id="s${n2}-${n3++}">${esc(b.x)}</h3>`;
+  else if(b.t==='p')body+=`<p>${esc(b.x)}</p>`;
+  else if(b.t==='ul')body+=`<ul>${b.items.map((x,li)=>`<li>${esc(x)}${(insInLi[bi+':'+li]||[]).join('')}</li>`).join('')}</ul>`;
+  else if(b.t==='fig')body+=`<figure class="fig"><div class="ph">Ảnh minh họa</div><figcaption>${esc(b.x)}</figcaption></figure>`;
+  else if(b.t==='alert')body+=`<div class="alert">${esc(b.x)}</div>`;
+  (insAfter[bi]||[]).forEach(h=>body+=h)});
+ const docBox=art.doctor?`<div class="doc"><div class="av">BS</div><div><div class="lb">Tư vấn chuyên môn bài viết</div><div class="nm">BS.CKI Nguyễn Thị A</div><div>Khoa ${CATE} · BVĐK Tâm Anh TP.HCM</div><div class="bt"><span>ĐẶT LỊCH HẸN</span><span>XEM HỒ SƠ</span></div></div></div>`:'';
+ const mShare=(mob&&S.lay!=='now')?`<div class="share-h">${an('Chia sẻ ngay dưới tiêu đề')}<span>Chia sẻ</span>${shBtn('fb','Facebook')}${shBtn('zl','Zalo')}${shBtn('ms','Messenger')}${shBtn('ln','Sao chép liên kết')}${shBtn('na','Chia sẻ qua ứng dụng khác')}</div>`:'';
+ const endShare=S.lay==='now'?`<div class="endshare">${an('Hiện tại: chia sẻ chỉ có ở cuối bài, không có Zalo')}${shBtn('fb','Facebook')}${shBtn('tw','Twitter')}${shBtn('pi','Pinterest')}</div>`
+  :`<div class="endshare"><span>Chia sẻ bài viết</span>${shBtn('fb','Facebook')}${shBtn('zl','Zalo')}${shBtn('ms','Messenger')}${shBtn('ln','Sao chép liên kết')}</div>`;
+ const tocOn=!(mode==='pc'&&LAY==='B3')&&h2list.length>0;
+ const tocHtml=tocOn?`<nav class="toc" id="inline-toc" aria-label="Mục lục"><div class="th"><span>Mục lục</span><span>▾</span></div><ol>${h2list.map(h=>{const subs=toc.filter(t=>t.lvl===3&&t.n===h.n);return `<li><a href="#${h.id}" data-act="jump" data-id="${h.id}">${esc(h.x)}</a>${subs.length?`<ol>${subs.map(s=>`<li><a href="#${s.id}" data-act="jump" data-id="${s.id}">${esc(s.x)}</a></li>`).join('')}</ol>`:''}</li>`}).join('')}</ol></nav>`:'';
+ const feat=art.feat?`<img class="feat" src="${art.feat}" alt="${esc(art.title)}">`:`<div class="feat-ph">Ảnh đại diện bài</div>`;
+ const hbox=S.lay==='now'?hospitalsNow():hospitals(mob);
+ return `<article class="art">
+ <div class="crumb">Trang chủ › Kiến thức y khoa › <b>${CATE}</b></div>
+ <span class="mockflag">Nội dung mô phỏng để demo bố cục, không phải bài thật</span>
+ <div class="top2${art.doctor?'':' nodoc'}"><div><h1 class="ttl">${esc(art.title)}</h1><div class="meta"><span>${art.date}</span><span class="ggpill">Chọn <b>Google</b> · Tâm Anh làm nguồn ưu tiên</span></div>${mob?docBox:''}${mShare}<p class="sapo">${esc(art.sapo)}</p></div>${mob?'':docBox}</div>
+ ${feat}${tocHtml}${body}${tail}${hbox}${endShare}
+ <div class="related"><h4>Bài viết liên quan</h4><div class="rgrid">${RELATED.map(t=>`<div class="rc"><div class="im"></div><p>${esc(t)}</p></div>`).join('')}</div></div></article>`}
+
+function railNew(){const R=ranked(),list=R.ok.slice(0,3);
+ let h=an('Cột phải sticky · dài hơn màn hình thì cuộn theo bài tới khi thấy đáy form rồi mới dính');
+ if(!list.length)h+=S.qa==='rail'?an('Bài không có banner → cột phải gồm form đặt lịch + Bác sĩ đã trả lời')+booking()+ask(3):an('Bài không có banner → cột phải chỉ có form (hỏi đáp đã chèn trong bài)')+booking();
+ else h+=`${list.length>1?an(`Slide ${list.length} banner · kéo/vuốt để chuyển · tự chuyển sau ${AUTO/1000} giây nếu không thao tác · dừng khi rê chuột`):''}${carousel(list,'side')}${booking()}`;
+ if(R.no.length)h+=an(`Đã loại "${R.no[0].name}": ${R.no[0].match}`,'bad');
+ return `<aside class="rail" aria-label="Đặt lịch và tư vấn">${h}</aside>`}
+function railNow(){const R=ranked();
+ return `<div class="rail-now">${R.all.length?an('Hiện tại: banner xếp chồng, không sticky')+R.all.map(b=>`<div>${bnrImg(b,'side')}</div>`).join(''):''}<div class="void">${R.all.length?'Trống suốt phần còn lại của bài':'Bài không có banner: cột phải trống'}</div></div>`}
+const shareV=()=>`<div class="share-v">${an('Sticky')}${tocItems(A()).length?`<button class="sh" type="button" data-act="tocpop" aria-label="Mục lục" title="Mục lục">${ICON.list}</button><span class="lb">Mục lục</span><hr>`:''}<span class="lb">Chia sẻ</span>${shBtn('fb','Facebook')}${shBtn('zl','Zalo')}${shBtn('ms','Messenger')}${shBtn('ln','Sao chép liên kết')}</div>`;
+function leftToc(withShare){const art=A(),h=tocItems(art).filter(t=>t.lvl===2);
+ const share=withShare?`<div class="card share-card"><div class="ct">Chia sẻ bài viết</div><div class="share-row">${shBtn('fb','Facebook')}${shBtn('zl','Zalo')}${shBtn('ms','Messenger')}${shBtn('ln','Sao chép liên kết')}</div></div>`:'';
+ const doc=art.doctor?`<div class="card" style="display:flex;gap:10px;align-items:center;font-size:13px;padding:12px"><div class="av" style="width:42px;height:42px;font-size:13px">BS</div><div><b style="color:var(--ink)">BS.CKI Nguyễn Thị A</b><br><span style="color:var(--mut)">Tư vấn chuyên môn</span></div></div>`:'';
+ return `<div class="ltoc">${an('Mục lục sticky')}<div class="card"><div class="ct">Mục lục<span data-pct>0%</span></div><div class="prog"><i data-prog></i></div><ol>${h.map(x=>`<li><button type="button" data-act="jump" data-id="${x.id}" data-tocn="${x.n}">${esc(x.x)}</button></li>`).join('')}</ol></div>${share}${doc}</div>`}
+
+/* ============ Render ============ */
+function render(){uid=0;
+ const fw=S.dev==='pc'?frame.parentElement.clientWidth:S.dev==='tab'?820:390;
+ frame.className='frame'+(S.dev==='mb'?' phone':S.dev==='tab'?' tablet':'');
+ let lay=S.lay,note='';
+ if(S.dev==='pc'&&S.lay==='B3'&&fw<1420){lay='A';note='Màn hình dưới 1420px: B tự chuyển về A'}
+ else if(S.dev==='pc'&&S.lay==='B3'&&!tocItems(A()).some(t=>t.lvl===2)){lay='A';note='Bài không có mục lục: không hiện cột mục lục, tự dùng bố cục A'}
+ LAY=lay;
+ if(S.dev==='pc'&&fw<1200)note='Màn hình hẹp: nên xem chế độ Tablet/Mobile';
+ document.getElementById('tbnote').textContent=note;
+ const mob=S.dev!=='pc';
+ const head=mob?`<div class="hd-m"><span class="burger"></span><span class="brandtxt">TâmAnh<span>Hospital</span></span><span class="srch"></span></div>`
+ :`<header class="hd"><div class="hd-in"><span class="logo"><span class="ta">ta</span><span class="lt">Tâm Anh<br>Hospital</span></span><div><div class="hot"><div><small>Hà Nội</small>024 7106 6858 - 024 3872 3872</div><div><small>Hồ Chí Minh</small>028 7102 6789 – 093 180 6858</div></div><div class="hd-links"><span>Dành cho khách hàng</span><span>Hỏi đáp</span><span>Đặt lịch khám</span></div></div></div></header>
+ <nav class="mn"><div class="mn-in"><span>GIỚI THIỆU</span><span>CHUYÊN KHOA</span><span>CHUYÊN GIA – BÁC SĨ</span><span>DỊCH VỤ ĐẶC BIỆT</span><span>TIỆN NGHI</span><span>GIẢI THƯỞNG</span><span>TIN TỨC</span><span>LIÊN HỆ</span></div></nav>`;
+ let page;
+ if(mob)page=`<div class="pg ${S.dev==='tab'?'t':'m'}">${article(S.dev==='tab'?'t':'m')}</div>`;
+ else if(lay==='now')page=`<div class="pg now"><div class="void" style="min-height:2400px">Cột trái trống</div>${article('pc')}${railNow()}</div>`;
+ else if(lay==='A')page=`<div class="pg A">${shareV()}${article('pc')}${railNew()}</div>`;
+ else page=`<div class="pg B3">${leftToc(true)}${article('pc')}${railNew()}</div>`;
+ let bar='';
+ if(mob)bar=S.lay==='now'?`<div class="bar-now"><button data-act="toast" data-m="Mở Messenger, rời khỏi trang">Tư vấn</button><button data-act="toast" data-m="Mở cửa sổ gọi tổng đài">Liên hệ</button><button data-act="toast" data-m="Chuyển sang /dat-lich-kham/: rời bài và phải chọn lại 6 mục">Đặt lịch khám</button></div>`
+  :`<div class="bar-new" data-bar><button data-act="sheet" data-k="call">${ICON.phone}<span>Gọi<small>Tổng đài</small></span></button><button data-act="sheet" data-k="chat">${ICON.chat}<span>Chat tư vấn<small>Zalo · Messenger</small></span></button><button class="pri" data-act="sheet" data-k="book">${ICON.cal}<span>Đặt lịch khám<small>${CATE}</small></span></button></div>`;
+ const keep=vp.scrollTop/Math.max(1,vp.scrollHeight-vp.clientHeight);
+ vp.innerHTML=head+page+`<div class="foot">© Bệnh viện Đa khoa Tâm Anh · trang mô phỏng nội bộ</div>`+bar;
+ vp.classList.toggle('noanno',!S.anno);ovroot.innerHTML='';
+ const hasToc=tocItems(A()).length>0;let fabs='';
+ if(mob&&hasToc)fabs=`<button class="fab off${S.lay==='now'?' now':''}" type="button" data-act="tocopen" aria-label="Mở mục lục">${S.lay==='now'?'':'<svg class="ring" viewBox="0 0 52 52"><circle cx="26" cy="26" r="23.5" fill="none" stroke="#e3e8f2" stroke-width="3"/><circle data-ring cx="26" cy="26" r="23.5" fill="none" stroke="#1c3f94" stroke-width="3" stroke-linecap="round" stroke-dasharray="147.65" stroke-dashoffset="147.65"/></svg>'}${ICON.list}</button>`;
+ if(!mob&&lay==='now'&&hasToc)fabs+=`<button class="fab dfab off now" type="button" data-act="tocpop" aria-label="Mở mục lục">${ICON.list}</button>`;
+ if(!mob)fabs+=`<button class="btt off" type="button" data-act="top" aria-label="Lên đầu trang" title="Lên đầu trang"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></button>`;
+ fabroot.innerHTML=fabs;
+ vp.scrollTop=keep*(vp.scrollHeight-vp.clientHeight);
+ syncTb();initCars();watchRail();onScroll();save()}
+function syncTb(){document.querySelectorAll('.sg[data-k]').forEach(g=>{const k=g.dataset.k;g.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(String(S[k])===b.dataset.v)))});
+ const lay=document.querySelector('.sg[data-k="lay"]');lay.querySelectorAll('button').forEach(b=>{const v=b.dataset.v;b.textContent=S.dev==='pc'?{now:'Hiện tại',A:'A',B3:'B · 3 cột'}[v]:(v==='now'?'Hiện tại':'Đề xuất');b.hidden=S.dev!=='pc'&&v==='A'});
+ if(S.dev!=='pc'&&S.lay!=='now')lay.querySelector('[data-v="B3"]').setAttribute('aria-pressed','true');
+ document.getElementById('qaGroup').hidden=S.dev!=='pc';
+ document.getElementById('annoT').checked=S.anno}
+
+/* ============ Carousel: kéo/vuốt + tự chuyển ============ */
+let cars=[];
+function initCars(){cars.forEach(c=>c.io&&c.io.disconnect());cars=[];
+ vp.querySelectorAll('[data-car]').forEach(el=>{
+  const c={el,strip:el.querySelector('.car-strip'),view:el.querySelector('.car-view'),n:el.querySelectorAll('.car-sl').length,i:0,t:0,hover:false,vis:true,drag:null,moved:false};
+  cars.push(c);if(c.n<2)return;
+  el.addEventListener('mouseenter',()=>c.hover=true);el.addEventListener('mouseleave',()=>c.hover=false);
+  c.view.addEventListener('pointerdown',e=>{if(e.button!==0)return;c.drag={x:e.clientX,y:e.clientY,dx:0,id:e.pointerId};c.moved=false});
+  c.view.addEventListener('pointermove',e=>{if(!c.drag)return;const dx=e.clientX-c.drag.x,dy=e.clientY-c.drag.y;
+   if(!c.moved&&Math.abs(dx)>6&&Math.abs(dx)>Math.abs(dy)){c.moved=true;c.strip.style.transition='none';try{c.view.setPointerCapture(c.drag.id)}catch(_){}}
+   if(c.moved){c.drag.dx=dx;place(c)}});
+  const end=()=>{if(!c.drag)return;const dx=c.drag.dx,moved=c.moved;c.drag=null;c.strip.style.transition='';if(moved&&Math.abs(dx)>40)carGo(c,c.i+(dx<0?1:-1));else place(c)};
+  c.view.addEventListener('pointerup',end);c.view.addEventListener('pointercancel',end);
+  c.view.addEventListener('click',e=>{if(c.moved){e.preventDefault();e.stopPropagation();c.moved=false}},true);
+  if('IntersectionObserver' in window){c.io=new IntersectionObserver(es=>{c.vis=es[0].intersectionRatio>=.5},{root:vp,threshold:[0,.5,1]});c.io.observe(el)}
+  place(c)})}
+function place(c){const sl=c.strip.children;if(!sl.length)return;const gap=parseFloat(getComputedStyle(c.strip).columnGap)||0;
+ const w=sl[0].getBoundingClientRect().width+gap,max=Math.max(0,c.strip.scrollWidth-c.view.clientWidth),off=Math.min(c.i*w,max),dx=c.drag&&c.moved?c.drag.dx:0;
+ c.strip.style.transform=`translateX(${-off+dx}px)`;
+ c.el.querySelectorAll('.car-dots button').forEach((d,j)=>{d.classList.toggle('past',j<c.i);d.setAttribute('aria-current',String(j===c.i));if(j!==c.i)d.querySelector('i').style.width=''});
+ const n=c.el.querySelector('[data-n]');if(n)n.textContent=(c.i+1)+'/'+c.n}
+function carGo(c,i){c.i=(i+c.n)%c.n;c.t=0;place(c)}
+setInterval(()=>{cars.forEach(c=>{if(c.n<2)return;if(reduce||c.hover||c.drag||!c.vis||document.hidden)return;
+ c.t+=100;const d=c.el.querySelectorAll('.car-dots button')[c.i];if(d)d.querySelector('i').style.width=Math.min(100,c.t/AUTO*100)+'%';
+ if(c.t>=AUTO)carGo(c,c.i+1)})},100);
+
+/* ============ Rail sticky thông minh ============ */
+let ro;
+function fitRail(){const r=vp.querySelector('.rail');if(!r)return;const h=r.offsetHeight,v=vp.clientHeight;
+ // nếu nút back-to-top nằm đè lên cột phải (màn hẹp) thì chừa chỗ phía dưới cho nút
+ let gap=16;const b=fabroot.querySelector('.btt');if(b){const rr=r.getBoundingClientRect(),br=b.getBoundingClientRect();if(rr.right>br.left-8)gap=16+br.height+12}
+ r.style.top=(h+16+gap>v?v-h-gap:16)+'px'}
+function watchRail(){if(ro)ro.disconnect();const r=vp.querySelector('.rail');if(!r||!('ResizeObserver' in window)){fitRail();return}ro=new ResizeObserver(fitRail);ro.observe(r);fitRail()}
+
+/* ============ Cuộn ============ */
+let lastTop=0;
+function readPct(){const max=vp.scrollHeight-vp.clientHeight;return max>0?vp.scrollTop/max:0}
+function activeSec(){const top=vp.getBoundingClientRect().top;let a='';vp.querySelectorAll('.art h2[id], .art h3[id]').forEach(h=>{if(h.getBoundingClientRect().top-top<150)a=h.id});return a}
+function onScroll(){const pct=readPct();
+ vp.querySelectorAll('[data-prog]').forEach(i=>i.style.width=Math.round(pct*100)+'%');
+ vp.querySelectorAll('[data-pct]').forEach(i=>i.textContent=Math.round(pct*100)+'%');
+ const act=activeSec(),a2=act?act.split('-')[0]:'s0';
+ vp.querySelectorAll('[data-tocn]').forEach(b=>b.classList.toggle('on','s'+b.dataset.tocn===a2));
+ const bar=vp.querySelector('[data-bar]');if(bar){if(vp.scrollTop>lastTop+2&&vp.scrollTop>200)bar.classList.add('hide');else if(vp.scrollTop<lastTop-2)bar.classList.remove('hide')}
+ const fab=fabroot.querySelector('.fab');if(fab){const t=vp.querySelector('#inline-toc');const past=t?t.getBoundingClientRect().bottom<vp.getBoundingClientRect().top:vp.scrollTop>400;
+  const end=vp.querySelector('.hbox, .related');const atEnd=end&&end.getBoundingClientRect().top<vp.getBoundingClientRect().top+vp.clientHeight*.5;
+  fab.classList.toggle('off',!past||atEnd);const ring=fab.querySelector('[data-ring]');if(ring)ring.setAttribute('stroke-dashoffset',String(147.65*(1-pct)));
+  if(fab.classList.contains('dfab')){const art=vp.querySelector('.art');if(art)fab.style.left=(art.getBoundingClientRect().right-frame.getBoundingClientRect().left+14)+'px'}}
+ const far=vp.scrollTop>vp.clientHeight*.8;
+ const btt=fabroot.querySelector('.btt');if(btt)btt.classList.toggle('off',!far);
+ lastTop=vp.scrollTop}
+vp.addEventListener('scroll',onScroll,{passive:true});
+vp.addEventListener('error',e=>{const im=e.target;if(!(im instanceof HTMLImageElement)||!im.classList.contains('bimg'))return;
+ const sp=document.createElement('span');sp.className='bfb';sp.style.background=im.dataset.c||'#1c3f94';sp.innerHTML=`<b>${esc(im.alt)}</b><span>Không tải được ảnh banner thật</span>`;im.replaceWith(sp)},true);
+
+/* ============ Tương tác ============ */
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;frame.appendChild(t);setTimeout(()=>t.remove(),2400)}
+function openSheet(title,inner){ovroot.innerHTML=`<div class="ovl" data-act="close"><div class="sheet" role="dialog" aria-label="${esc(title)}"><div class="grab"></div><div class="sh-head"><b>${esc(title)}</b><button class="x" type="button" data-act="close">Đóng</button></div>${inner}</div></div>`}
+function sheet(k){if(k==='book')openSheet('Đặt lịch khám',booking());
+ else if(k==='chat')openSheet('Chat tư vấn',`<div class="chat-list">
+  <button class="chat-row" type="button" data-act="toast" data-m="Mở Zalo OA Bệnh viện Tâm Anh (demo)">${ICON.zl}<span><b>Chat qua Zalo</b><small>Nhắn tin với CSKH Tâm Anh</small></span></button>
+  <button class="chat-row" type="button" data-act="toast" data-m="Mở Messenger Bệnh viện Tâm Anh (demo)">${ICON.ms}<span><b>Chat qua Messenger</b><small>Fanpage Bệnh viện Đa khoa Tâm Anh</small></span></button>
+  <button class="chat-row" type="button" data-act="sheet" data-k="ask"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#1c3f94"/><path d="M8 9h8M8 13h5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg><span><b>Gửi câu hỏi cho bác sĩ</b><small>Bác sĩ ${CATE} trả lời</small></span></button>
+  <p class="sos">Cấp cứu: gọi 115 hoặc đến khoa Cấp cứu 24/7</p></div>`);
+ else if(k==='ask')openSheet('Hỏi bác sĩ',ask(2,true));
+ else openSheet('Gọi tổng đài',`<div class="hbox" style="margin:4px 0 0;box-shadow:none">${REGIONS.map(r=>`<div style="padding:12px 14px;border-bottom:1px solid var(--line)"><b style="color:var(--brand);font-size:16px">${r.name}</b><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">${r.hot.map(h=>`<a class="hot-btn" href="tel:${h.replace(/\s/g,'')}" data-act="toast" data-m="Gọi ${h}">${ICON.phone}${h}</a>`).join('')}</div></div>`).join('')}<p class="sos" style="padding:0 14px 12px">Cấp cứu: gọi 115 hoặc đến khoa Cấp cứu 24/7</p></div>`)}
+function tocSheet(){const items=tocItems(A()),act=activeSec(),pct=Math.round(readPct()*100);
+ openSheet('Mục lục',`<div class="tocp"><div class="rd">Đã đọc ${pct}%</div><div class="prog" style="margin-top:6px"><i style="width:${pct}%"></i></div>${tocList()}<button class="btn gh" type="button" data-act="top">↑ Lên đầu trang</button></div>`)}
+function tocList(){const items=tocItems(A()),act=activeSec();
+ return `<ol>${items.map(t=>`<li><a href="#${t.id}" class="${t.lvl===3?'h3':''}${t.id===act||(t.lvl===2&&act.split('-')[0]===t.id&&!items.some(x=>x.id===act&&x.lvl===3))?' on':''}" data-act="jump" data-id="${t.id}" data-close="1">${esc(t.x)}</a></li>`).join('')}</ol>`}
+function tocPop(anchor){const r=anchor.getBoundingClientRect(),f=frame.getBoundingClientRect(),pct=Math.round(readPct()*100),W=360;
+ let left=r.right-f.left+12;if(left+W>f.width-12)left=r.left-f.left-W-12;
+ const top=Math.max(12,Math.min(r.top-f.top-40,f.height-12-Math.min(560,f.height*.75)));
+ ovroot.innerHTML=`<div class="ovl-t" data-act="close"><div class="tocpop tocp" role="dialog" aria-label="Mục lục" style="left:${left}px;top:${top}px"><div class="sh-head"><b>Mục lục</b><button class="x" type="button" data-act="close">Đóng</button></div><div class="rd">Đã đọc ${pct}%</div><div class="prog" style="margin-top:6px"><i style="width:${pct}%"></i></div>${tocList()}</div></div>`}
+function jump(id){const h=vp.querySelector('#'+CSS.escape(id));if(!h)return;vp.scrollTo({top:h.getBoundingClientRect().top-vp.getBoundingClientRect().top+vp.scrollTop-12,behavior:reduce?'auto':'smooth'})}
+const carOf=el=>cars.find(c=>c.el===el.closest('[data-car]'));
+frame.addEventListener('click',e=>{
+ const chip=e.target.closest('.chips button');
+ if(chip&&chip.hasAttribute('data-sug')){const f=chip.closest('form'),ta=f.querySelector('[data-q]');ta.value=chip.textContent;f.querySelector('[data-step2]').hidden=false;ta.focus();return}
+ if(chip){const g=chip.parentElement;if(g.hasAttribute('data-single'))g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===chip)));return}
+ const a=e.target.closest('[data-act]');if(!a)return;const act=a.dataset.act;
+ if(act==='close'){if(e.target===a||a.classList.contains('x'))ovroot.innerHTML='';return}
+ e.preventDefault();
+ if(act==='share'){const k=a.dataset.k;
+  if(k==='ln'){const url='https://tamanhhospital.vn/bi-sot-xuat-huyet-khi-mang-thai-3-thang-dau/';(navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject()).then(()=>toast('Đã sao chép liên kết bài viết')).catch(()=>toast('Không sao chép được, hãy copy từ thanh địa chỉ'));return}
+  if(k==='up'){vp.scrollTo({top:0});return}
+  if(k==='na'){if(navigator.share)navigator.share({title:A().title,url:location.href}).catch(()=>{});else toast('Trên điện thoại sẽ mở bảng chia sẻ của máy (Zalo, Messenger, tin nhắn…)');return}
+  toast({fb:'Mở hộp chia sẻ Facebook',zl:'Mở chia sẻ Zalo',ms:'Mở chia sẻ Messenger',tw:'Mở chia sẻ Twitter',pi:'Mở chia sẻ Pinterest'}[k]+' (demo)');return}
+ if(act==='bclick'){toast('Click banner: ghi sự kiện banner_click ('+a.dataset.k+') rồi mở trang chương trình');return}
+ if(act==='cprev'||act==='cnext'||act==='cgo'){const c=carOf(a);if(!c)return;carGo(c,act==='cgo'?+a.dataset.i:c.i+(act==='cnext'?1:-1));return}
+ if(act==='ktog'){const kt=a.closest('[data-kt]'),o=kt.querySelector('.kt-opts'),open=o.hidden;o.hidden=!open;kt.querySelectorAll('[data-act="ktog"]').forEach(b=>b.setAttribute('aria-expanded',String(open)));return}
+ if(act==='kpick'){const kt=a.closest('[data-kt]'),k=a.textContent;kt.querySelector('[data-kname]').textContent=k;kt.querySelector('[data-kval]').value=k;
+  kt.querySelectorAll('.kt-opts button').forEach(b=>b.setAttribute('aria-pressed',String(b===a)));kt.querySelector('.kt-opts').hidden=true;kt.querySelectorAll('[data-act="ktog"]').forEach(b=>b.setAttribute('aria-expanded','false'));return}
+ if(act==='ask'){const f=a.parentElement.querySelector('form[data-form="ask"]');f.hidden=false;a.hidden=true;f.querySelector('textarea').focus();return}
+ if(act==='htab'){const box=a.closest('.hbox');box.querySelectorAll('[data-act="htab"]').forEach(b=>b.setAttribute('aria-selected',String(b===a)));box.querySelectorAll('.hreg').forEach(r=>r.hidden=r.dataset.reg!==a.dataset.k);return}
+ if(act==='jump'){if(a.dataset.close)ovroot.innerHTML='';jump(a.dataset.id);return}
+ if(act==='tocopen'){tocSheet();return}
+ if(act==='tocpop'){tocPop(a);return}
+ if(act==='top'){ovroot.innerHTML='';vp.scrollTo({top:0,behavior:reduce?'auto':'smooth'});return}
+ if(act==='sheet'){sheet(a.dataset.k);return}
+ if(act==='toast'){toast(a.dataset.m);return}
+});
+frame.addEventListener('input',e=>{const t=e.target;if(t.matches('[data-q]'))t.closest('form').querySelector('[data-step2]').hidden=t.value.trim().length<10;
+ if(t.matches('[data-tel]')&&t.getAttribute('aria-invalid')==='true')validTel(t)});
+frame.addEventListener('focusout',e=>{const t=e.target;if(t.matches&&t.matches('[data-tel]')&&t.value)validTel(t)});
+function validTel(t){const ok=/^0(3|5|7|8|9)\d{8}$/.test(t.value.replace(/[\s.]/g,''));t.setAttribute('aria-invalid',String(!ok));t.nextElementSibling.hidden=ok;return ok}
+frame.addEventListener('submit',e=>{e.preventDefault();const f=e.target;let ok=true;
+ const tel=f.querySelector('[data-tel]');if(tel&&!validTel(tel))ok=false;
+ const nm=f.querySelector('[data-name]');if(nm){const bad=!nm.value.trim();nm.setAttribute('aria-invalid',String(bad));if(bad)ok=false}
+ const c=f.querySelector('[data-consent]'),ce=f.querySelector('[data-cerr]');if(c&&!c.checked){ce.hidden=false;ok=false}else if(ce)ce.hidden=true;
+ if(!ok)return;
+ if(f.dataset.form==='book'){const site=f.querySelector('[data-site]').value,khoa=f.querySelector('[data-kval]').value,hot=/Hà Nội|Cầu Giấy/.test(site)?'024 3872 3872':'028 7102 6789';
+  f.innerHTML=`<div class="done"><b>Đã nhận yêu cầu đặt lịch</b>Khoa ${esc(khoa)} tại ${esc(site)}. CSKH sẽ gọi lại số ${esc(tel.value)} để chốt ngày giờ. Cần gấp, gọi ${hot}.</div><p class="sos">Bản mô phỏng: không có dữ liệu nào được gửi đi.</p>`}
+ else f.innerHTML=`<div class="done"><b>Đã gửi câu hỏi</b>Bác sĩ ${CATE} sẽ trả lời qua thông tin liên hệ bạn để lại.</div><p class="sos">Bản mô phỏng: không có dữ liệu nào được gửi đi.</p>`});
+
+/* ============ Toolbar ============ */
+document.querySelectorAll('.sg[data-k]').forEach(g=>g.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const k=g.dataset.k;
+ S[k]=k==='n'?+b.dataset.v:b.dataset.v;if(k==='lay')S.rule=S.lay==='now'?'old':'new';render()}));
+document.getElementById('annoT').addEventListener('change',e=>{S.anno=e.target.checked;vp.classList.toggle('noanno',!S.anno);fitRail();save()});
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(render,200)});
+render();
+})();
+</script>
+</body>
+</html>
